@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/default :: html(~{::title}, ~{::main}, ~{::link}, ~{::script})}">
+<head>
+    <title>商品列表 - 電商系統</title>
+    <link rel="stylesheet" href="">
+</head>
+<body>
+    <main>
+        <div class="row">
+            <!-- 側邊欄過濾器 -->
+            <div class="col-md-3 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">商品過濾</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- 分類過濾 -->
+                        <div class="mb-4">
+                            <h6 class="border-bottom pb-2">商品分類</h6>
+                            <div class="form-check" th:each="category : ${categories}">
+                                <input class="form-check-input category-filter" type="checkbox" 
+                                       th:value="${category.id}" th:id="'category-' + ${category.id}"
+                                       th:checked="${param.categoryId != null && param.categoryId[0] == category.id.toString()}">
+                                <label class="form-check-label" th:for="'category-' + ${category.id}" 
+                                       th:text="${category.name}">分類名稱</label>
+                            </div>
+                        </div>
+                        
+                        <!-- 價格範圍過濾 -->
+                        <div class="mb-4">
+                            <h6 class="border-bottom pb-2">價格範圍</h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" id="price-min" 
+                                           placeholder="最低價" th:value="${param.minPrice}">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control form-control-sm" id="price-max" 
+                                           placeholder="最高價" th:value="${param.maxPrice}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 排序選項 -->
+                        <div class="mb-4">
+                            <h6 class="border-bottom pb-2">排序方式</h6>
+                            <select class="form-select form-select-sm" id="sort-by">
+                                <option value="id,desc" th:selected="${param.sort == null || param.sort[0] == 'id,desc'}">最新上架</option>
+                                <option value="price,asc" th:selected="${param.sort != null && param.sort[0] == 'price,asc'}">價格從低到高</option>
+                                <option value="price,desc" th:selected="${param.sort != null && param.sort[0] == 'price,desc'}">價格從高到低</option>
+                                <option value="name,asc" th:selected="${param.sort != null && param.sort[0] == 'name,asc'}">名稱 A-Z</option>
+                                <option value="name,desc" th:selected="${param.sort != null && param.sort[0] == 'name,desc'}">名稱 Z-A</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 應用過濾按鈕 -->
+                        <button id="apply-filter" class="btn btn-primary w-100">應用過濾</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 商品列表 -->
+            <div class="col-md-9">
+                <!-- 搜索結果提示 -->
+                <div class="alert alert-info" th:if="${param.keyword != null && param.keyword[0] != ''}">
+                    <i class="bi bi-search"></i> 
+                    搜索結果：<span th:text="${param.keyword[0]}">關鍵字</span>
+                    <a th:href="@{/products}" class="float-end">清除搜索</a>
+                </div>
+                
+                <!-- 分類提示 -->
+                <div class="alert alert-info" th:if="${param.categoryId != null && param.categoryId[0] != ''}">
+                    <i class="bi bi-tag"></i> 
+                    分類：<span th:text="${categories.stream().filter(c -> c.id.toString() == param.categoryId[0]).findFirst().orElse(new Category()).name}">分類名稱</span>
+                    <a th:href="@{/products}" class="float-end">查看所有分類</a>
+                </div>
+                
+                <!-- 商品網格 -->
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
+                    <div class="col" th:each="product : ${products}">
+                        <div class="card h-100 shadow-sm">
+                            <img th:src="${product.imageUrl} ?: 'https://via.placeholder.com/300x200?text=商品圖片'" 
+                                 class="card-img-top" alt="商品圖片">
+                            <div class="card-body">
+                                <h5 class="card-title" th:text="${product.name}">商品名稱</h5>
+                                <p class="card-text text-truncate" th:text="${product.description}">商品描述...</p>
+                                <p class="card-text text-danger fw-bold" th:text="'NT$ ' + ${product.price}">NT$ 1000</p>
+                                <p class="card-text small" th:if="${product.stock > 0}">
+                                    <span class="text-success">
+                                        <i class="bi bi-check-circle"></i> 有庫存
+                                    </span>
+                                    <span class="text-muted" th:text="'(' + ${product.stock} + '件)'"></span>
+                                </p>
+                                <p class="card-text small text-danger" th:if="${product.stock <= 0}">
+                                    <i class="bi bi-x-circle"></i> 缺貨中
+                                </p>
+                            </div>
+                            <div class="card-footer bg-transparent border-top-0">
+                                <div class="d-flex justify-content-between">
+                                    <a th:href="@{/products/{id}(id=${product.id})}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-info-circle"></i> 詳情
+                                    </a>
+                                    <button class="btn btn-sm btn-primary add-to-cart" 
+                                            th:attr="data-product-id=${product.id}"
+                                            th:disabled="${product.stock <= 0}">
+                                        <i class="bi bi-cart-plus"></i> 加入購物車
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 沒有商品時顯示 -->
+                    <div class="col-12" th:if="${#lists.isEmpty(products)}">
+                        <div class="alert alert-warning text-center">
+                            <i class="bi bi-exclamation-triangle"></i> 沒有找到符合條件的商品
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 分頁 -->
+                <nav th:if="${totalPages > 1}">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled' : ''">
+                            <a class="page-link" th:href="@{/products(page=${currentPage - 1}, size=12, sort=${param.sort}, keyword=${param.keyword}, categoryId=${param.categoryId}, minPrice=${param.minPrice}, maxPrice=${param.maxPrice})}" aria-label="上一頁">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" 
+                            th:classappend="${currentPage == i} ? 'active' : ''">
+                            <a class="page-link" th:href="@{/products(page=${i}, size=12, sort=${param.sort}, keyword=${param.keyword}, categoryId=${param.categoryId}, minPrice=${param.minPrice}, maxPrice=${param.maxPrice})}" 
+                               th:text="${i + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled' : ''">
+                            <a class="page-link" th:href="@{/products(page=${currentPage + 1}, size=12, sort=${param.sort}, keyword=${param.keyword}, categoryId=${param.categoryId}, minPrice=${param.minPrice}, maxPrice=${param.maxPrice})}" aria-label="下一頁">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 應用過濾按鈕點擊事件
+            document.getElementById('apply-filter').addEventListener('click', function() {
+                // 獲取所有選中的分類
+                const selectedCategories = Array.from(document.querySelectorAll('.category-filter:checked'))
+                    .map(checkbox => checkbox.value);
+                
+                // 獲取價格範圍
+                const minPrice = document.getElementById('price-min').value;
+                const maxPrice = document.getElementById('price-max').value;
+                
+                // 獲取排序方式
+                const sortBy = document.getElementById('sort-by').value;
+                
+                // 構建URL參數
+                let params = new URLSearchParams();
+                
+                // 添加分類參數
+                if (selectedCategories.length === 1) {
+                    params.append('categoryId', selectedCategories[0]);
+                }
+                
+                // 添加價格範圍參數
+                if (minPrice) {
+                    params.append('minPrice', minPrice);
+                }
+                if (maxPrice) {
+                    params.append('maxPrice', maxPrice);
+                }
+                
+                // 添加排序參數
+                params.append('sort', sortBy);
+                
+                // 保留搜索關鍵字參數
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('keyword')) {
+                    params.append('keyword', urlParams.get('keyword'));
+                }
+                
+                // 跳轉到過濾後的URL
+                window.location.href = '/products?' + params.toString();
+            });
+            
+            // 加入購物車功能
+            const addToCartButtons = document.querySelectorAll('.add-to-cart');
+            
+            addToCartButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-product-id');
+                    
+                    // 檢查用戶是否登入
+                    fetch('/api/auth/check-auth', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            // 用戶未登入，跳轉到登入頁面
+                            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+                            throw new Error('請先登入');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // 用戶已登入，添加商品到購物車
+                        return fetch('/api/cart/items', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                productId: productId,
+                                quantity: 1
+                            })
+                        });
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 顯示成功訊息
+                        alert('商品已成功加入購物車！');
+                        // 更新購物車數量顯示
+                        updateCartItemCount();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
+            });
+            
+            // 更新購物車數量
+            function updateCartItemCount() {
+                fetch('/api/cart', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('獲取購物車資料失敗');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 更新購物車數量顯示
+                    const cartItemCount = document.querySelector('.position-relative .badge');
+                    if (cartItemCount) {
+                        cartItemCount.textContent = data.items.length;
+                        cartItemCount.style.display = data.items.length > 0 ? 'block' : 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

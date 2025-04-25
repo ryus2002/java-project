@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/default :: html(~{::title}, ~{::main}, ~{::link}, ~{::script})}">
+<head>
+    <title>會員資料 - 電商系統</title>
+    <link rel="stylesheet" href=""> <!-- 額外的CSS -->
+</head>
+<body>
+    <main>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-person"></i> 會員資料</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- 錯誤訊息 -->
+                        <div id="errorMessage" class="alert alert-danger d-none" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill"></i> <span id="errorText">獲取會員資料失敗</span>
+                        </div>
+                        
+                        <!-- 會員資料 -->
+                        <div class="row mb-4">
+                            <div class="col-md-3 text-center">
+                                <div class="avatar-container mb-3">
+                                    <i class="bi bi-person-circle" style="font-size: 6rem;"></i>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <h4 id="username" class="mb-3">用戶名</h4>
+                                <p><strong>暱稱：</strong> <span id="nickname">-</span></p>
+                                <p><strong>星座：</strong> <span id="zodiacSign">-</span></p>
+                                <p><strong>註冊時間：</strong> <span id="createdAt">-</span></p>
+                            </div>
+                        </div>
+                        
+                        <!-- 會員發布的評論 -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">最近評論</h5>
+                                <div id="reviewsContainer">
+                                    <!-- 評論將動態加載 -->
+                                    <p class="text-muted text-center" id="noReviewsMessage">該會員尚未發布任何評論</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 從URL獲取用戶ID
+            const pathParts = window.location.pathname.split('/');
+            const userId = pathParts[pathParts.length - 1];
+            
+            // 獲取會員公開資料
+            function loadUserPublicProfile(userId) {
+                fetch(`/api/users/${userId}/public`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('獲取會員資料失敗');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 填充會員資料
+                    document.getElementById('username').textContent = data.username;
+                    document.getElementById('nickname').textContent = data.nickname || '-';
+                    document.getElementById('zodiacSign').textContent = data.zodiacSign || '-';
+                    
+                    // 格式化註冊時間
+                    if (data.createdAt) {
+                        const createdDate = new Date(data.createdAt);
+                        document.getElementById('createdAt').textContent = createdDate.toLocaleString('zh-TW');
+                    }
+                    
+                    // 加載會員評論
+                    loadUserReviews(userId);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // 顯示錯誤訊息
+                    document.getElementById('errorText').textContent = '獲取會員資料失敗，請稍後再試。';
+                    document.getElementById('errorMessage').classList.remove('d-none');
+                });
+            }
+            
+            // 獲取會員評論
+            function loadUserReviews(userId) {
+                fetch(`/api/users/${userId}/reviews`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('獲取會員評論失敗');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const reviewsContainer = document.getElementById('reviewsContainer');
+                    const noReviewsMessage = document.getElementById('noReviewsMessage');
+                    
+                    if (data.length > 0) {
+                        // 隱藏無評論訊息
+                        noReviewsMessage.style.display = 'none';
+                        
+                        // 清空容器
+                        reviewsContainer.innerHTML = '';
+                        
+                        // 添加評論
+                        data.forEach(review => {
+                            const reviewElement = document.createElement('div');
+                            reviewElement.className = 'card mb-3';
+                            
+                            const reviewDate = new Date(review.createdAt).toLocaleString('zh-TW');
+                            
+                            reviewElement.innerHTML = `
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="card-title mb-0">
+                                            <a href="/products/${review.productId}">${review.productName}</a>
+                                        </h6>
+                                        <div class="text-warning">
+                                            ${generateStarRating(review.rating)}
+                                        </div>
+                                    </div>
+                                    <p class="card-text">${review.content}</p>
+                                    <p class="card-text"><small class="text-muted">${reviewDate}</small></p>
+                                </div>
+                            `;
+                            
+                            reviewsContainer.appendChild(reviewElement);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // 簡單顯示無評論訊息
+                    document.getElementById('noReviewsMessage').textContent = '無法加載評論';
+                });
+            }
+            
+            // 生成星級評分HTML
+            function generateStarRating(rating) {
+                let stars = '';
+                for (let i = 1; i <= 5; i++) {
+                    if (i <= rating) {
+                        stars += '<i class="bi bi-star-fill"></i>';
+                    } else if (i - 0.5 <= rating) {
+                        stars += '<i class="bi bi-star-half"></i>';
+                    } else {
+                        stars += '<i class="bi bi-star"></i>';
+                    }
+                }
+                return stars;
+            }
+            
+            // 頁面加載時獲取會員資料
+            loadUserPublicProfile(userId);
+        });
+    </script>
+</body>
+</html>

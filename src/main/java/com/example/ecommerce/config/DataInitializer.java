@@ -48,13 +48,11 @@ public class DataInitializer implements CommandLineRunner {
         // 檢查角色是否已存在
         if (roleRepository.count() == 0) {
             // 創建用戶角色
-            Role userRole = new Role();
-            userRole.setName(ERole.ROLE_USER);
+            Role userRole = new Role(ERole.ROLE_USER);
             roleRepository.save(userRole);
 
             // 創建管理員角色
-            Role adminRole = new Role();
-            adminRole.setName(ERole.ROLE_ADMIN);
+            Role adminRole = new Role(ERole.ROLE_ADMIN);
             roleRepository.save(adminRole);
 
             System.out.println("角色初始化完成");
@@ -68,12 +66,8 @@ public class DataInitializer implements CommandLineRunner {
         // 檢查管理員帳號是否已存在
         if (!userRepository.existsByUsername("admin")) {
             // 創建管理員帳號
-            User admin = new User();
-            admin.setUsername("admin");
-            admin.setEmail("admin@example.com");
-            admin.setPassword(passwordEncoder.encode("admin123"));
+            User admin = new User("admin", "admin@example.com", passwordEncoder.encode("admin123"));
             admin.setNickname("系統管理員");
-
             // 設置管理員角色
             Set<Role> roles = new HashSet<>();
             Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)

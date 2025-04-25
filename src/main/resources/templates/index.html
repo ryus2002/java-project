@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/default :: html(~{::title}, ~{::main}, ~{::link}, ~{::script})}">
+<head>
+    <title>首頁 - 電商系統</title>
+    <link rel="stylesheet" href=""> <!-- 額外的CSS -->
+</head>
+<body>
+    <main>
+        <!-- 輪播圖 -->
+        <div id="homeCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#homeCarousel" data-bs-slide-to="0" class="active"></button>
+                <button type="button" data-bs-target="#homeCarousel" data-bs-slide-to="1"></button>
+                <button type="button" data-bs-target="#homeCarousel" data-bs-slide-to="2"></button>
+            </div>
+            <div class="carousel-inner rounded shadow">
+                <div class="carousel-item active">
+                    <img src="https://via.placeholder.com/1200x400?text=促銷活動1" class="d-block w-100" alt="促銷活動1">
+                    <div class="carousel-caption d-none d-md-block">
+                        <h2>限時特惠</h2>
+                        <p>精選商品限時折扣，立即選購！</p>
+                        <a th:href="@{/products}" class="btn btn-primary">查看詳情</a>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="https://via.placeholder.com/1200x400?text=促銷活動2" class="d-block w-100" alt="促銷活動2">
+                    <div class="carousel-caption d-none d-md-block">
+                        <h2>新品上市</h2>
+                        <p>最新商品搶先體驗，限量供應！</p>
+                        <a th:href="@{/products}" class="btn btn-primary">立即選購</a>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="https://via.placeholder.com/1200x400?text=促銷活動3" class="d-block w-100" alt="促銷活動3">
+                    <div class="carousel-caption d-none d-md-block">
+                        <h2>會員專屬</h2>
+                        <p>會員獨享優惠，更多驚喜等你發現！</p>
+                        <a th:href="@{/register}" class="btn btn-primary">立即註冊</a>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#homeCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">上一個</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#homeCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">下一個</span>
+            </button>
+        </div>
+
+        <!-- 商品分類 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="border-bottom pb-2">商品分類</h2>
+            </div>
+            <div class="col-12">
+                <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-3">
+                    <div class="col" th:each="category : ${categories}">
+                        <a th:href="@{/products(categoryId=${category.id})}" class="text-decoration-none">
+                            <div class="card h-100 text-center shadow-sm">
+                                <div class="card-body">
+                                    <i class="bi bi-tag fs-1"></i>
+                                    <h5 class="card-title mt-2" th:text="${category.name}">分類名稱</h5>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <!-- 如果沒有分類，顯示提示信息 -->
+                    <div class="col-12" th:if="${#lists.isEmpty(categories)}">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> 暫無商品分類
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 熱門商品 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="border-bottom pb-2">熱門商品</h2>
+            </div>
+            <div class="col-12">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                    <div class="col" th:each="product : ${featuredProducts}">
+                        <div class="card h-100 shadow-sm">
+                            <img th:src="${product.imageUrl} ?: 'https://via.placeholder.com/300x200?text=商品圖片'" 
+                                 class="card-img-top" alt="商品圖片">
+                            <div class="card-body">
+                                <h5 class="card-title" th:text="${product.name}">商品名稱</h5>
+                                <p class="card-text text-truncate" th:text="${product.description}">商品描述...</p>
+                                <p class="card-text text-danger fw-bold" th:text="'NT$ ' + ${product.price}">NT$ 1000</p>
+                                <p class="card-text small" th:if="${product.stock > 0}">
+                                    <span class="text-success">
+                                        <i class="bi bi-check-circle"></i> 有庫存
+                                    </span>
+                                </p>
+                                <p class="card-text small text-danger" th:if="${product.stock <= 0}">
+                                    <i class="bi bi-x-circle"></i> 缺貨中
+                                </p>
+                            </div>
+                            <div class="card-footer bg-transparent border-top-0">
+                                <div class="d-flex justify-content-between">
+                                    <a th:href="@{/products/{id}(id=${product.id})}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-info-circle"></i> 詳情
+                                    </a>
+                                    <button class="btn btn-sm btn-primary add-to-cart" 
+                                            th:attr="data-product-id=${product.id}"
+                                            th:disabled="${product.stock <= 0}">
+                                        <i class="bi bi-cart-plus"></i> 加入購物車
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 如果沒有熱門商品，顯示提示信息 -->
+                    <div class="col-12" th:if="${#lists.isEmpty(featuredProducts)}">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> 暫無熱門商品
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 text-center mt-3">
+                <a th:href="@{/products}" class="btn btn-outline-primary">查看更多商品</a>
+            </div>
+        </div>
+
+        <!-- 最新商品 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="border-bottom pb-2">最新上架</h2>
+            </div>
+            <div class="col-12">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                    <div class="col" th:each="product : ${newProducts}">
+                        <div class="card h-100 shadow-sm">
+                            <div class="position-absolute top-0 end-0 p-2">
+                                <span class="badge bg-success">新品</span>
+                            </div>
+                            <img th:src="${product.imageUrl} ?: 'https://via.placeholder.com/300x200?text=商品圖片'" 
+                                 class="card-img-top" alt="商品圖片">
+                            <div class="card-body">
+                                <h5 class="card-title" th:text="${product.name}">商品名稱</h5>
+                                <p class="card-text text-truncate" th:text="${product.description}">商品描述...</p>
+                                <p class="card-text text-danger fw-bold" th:text="'NT$ ' + ${product.price}">NT$ 1000</p>
+                                <p class="card-text small" th:if="${product.stock > 0}">
+                                    <span class="text-success">
+                                        <i class="bi bi-check-circle"></i> 有庫存
+                                    </span>
+                                </p>
+                                <p class="card-text small text-danger" th:if="${product.stock <= 0}">
+                                    <i class="bi bi-x-circle"></i> 缺貨中
+                                </p>
+                            </div>
+                            <div class="card-footer bg-transparent border-top-0">
+                                <div class="d-flex justify-content-between">
+                                    <a th:href="@{/products/{id}(id=${product.id})}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-info-circle"></i> 詳情
+                                    </a>
+                                    <button class="btn btn-sm btn-primary add-to-cart" 
+                                            th:attr="data-product-id=${product.id}"
+                                            th:disabled="${product.stock <= 0}">
+                                        <i class="bi bi-cart-plus"></i> 加入購物車
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 如果沒有最新商品，顯示提示信息 -->
+                    <div class="col-12" th:if="${#lists.isEmpty(newProducts)}">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> 暫無最新商品
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 text-center mt-3">
+                <a th:href="@{/products}" class="btn btn-outline-primary">查看更多商品</a>
+            </div>
+        </div>
+
+        <!-- 優惠信息 -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="card text-center h-100 shadow-sm">
+                    <div class="card-body">
+                        <i class="bi bi-truck fs-1 text-primary"></i>
+                        <h5 class="card-title mt-2">免費配送</h5>
+                        <p class="card-text">訂單滿NT$ 1000即可享受免費配送服務</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="card text-center h-100 shadow-sm">
+                    <div class="card-body">
+                        <i class="bi bi-shield-check fs-1 text-primary"></i>
+                        <h5 class="card-title mt-2">品質保證</h5>
+                        <p class="card-text">所有商品均經過嚴格品質檢測，保證正品</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center h-100 shadow-sm">
+                    <div class="card-body">
+                        <i class="bi bi-headset fs-1 text-primary"></i>
+                        <h5 class="card-title mt-2">24/7客服支持</h5>
+                        <p class="card-text">隨時為您提供專業的購物諮詢和售後服務</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 加入購物車功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const addToCartButtons = document.querySelectorAll('.add-to-cart');
+            
+            addToCartButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-product-id');
+                    
+                    // 檢查用戶是否登入
+                    fetch('/api/auth/check-auth', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            // 用戶未登入，跳轉到登入頁面
+                            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                            throw new Error('請先登入');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // 用戶已登入，添加商品到購物車
+                        return fetch('/api/cart/items', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + localStorage.getItem('token')
+                            },
+                            body: JSON.stringify({
+                                productId: productId,
+                                quantity: 1
+                            })
+                        });
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('添加商品到購物車失敗');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // 顯示成功訊息
+                        alert('商品已成功加入購物車！');
+                        // 更新購物車數量顯示
+                        updateCartItemCount();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
+            });
+            
+            // 更新購物車數量
+            function updateCartItemCount() {
+                // 檢查用戶是否登入
+                fetch('/api/auth/check-auth', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('用戶未登入');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 用戶已登入，獲取購物車資料
+                    return fetch('/api/cart', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + localStorage.getItem('token')
+                        }
+                    });
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('獲取購物車資料失敗');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 更新購物車數量顯示
+                    const cartItemCount = document.querySelector('.position-relative .badge');
+                    if (cartItemCount && data.items) {
+                        cartItemCount.textContent = data.items.length;
+                        cartItemCount.style.display = data.items.length > 0 ? 'block' : 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+            
+            // 頁面加載時更新購物車數量
+            updateCartItemCount();
+        });
+    </script>
+</body>
+</html>

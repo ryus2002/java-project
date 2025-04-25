@@ -24,4 +24,36 @@ public class LoginRequest {
      */
     @NotBlank
     private String password;
+    
+    /**
+     * 獲取使用者名稱
+     * @return 使用者名稱
+     */
+    public String getUsername() {
+        return username;
+    }
+    
+    /**
+     * 設置使用者名稱
+     * @param username 使用者名稱
+     */
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    
+    /**
+     * 獲取密碼
+     * @return 密碼
+     */
+    public String getPassword() {
+        return password;
+    }
+    
+    /**
+     * 設置密碼
+     * @param password 密碼
+     */
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }

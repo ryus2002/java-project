@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/default :: html(~{::title}, ~{::main}, ~{::link}, ~{::script})}">
+<head>
+    <title>會員註冊 - 電商系統</title>
+    <link rel="stylesheet" href=""> <!-- 額外的CSS -->
+</head>
+<body>
+    <main>
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white text-center py-3">
+                        <h4 class="mb-0"><i class="bi bi-person-plus"></i> 會員註冊</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- 註冊表單 -->
+                        <form id="registerForm" method="post">
+                            <!-- 錯誤訊息 -->
+                            <div id="errorMessage" class="alert alert-danger d-none" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill"></i> <span id="errorText">註冊失敗，請檢查輸入資料。</span>
+                            </div>
+                            
+                            <!-- 用戶名 -->
+                            <div class="mb-3">
+                                <label for="username" class="form-label">用戶名 <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           placeholder="請輸入用戶名（3-20個字符）" required
+                                           minlength="3" maxlength="20">
+                                </div>
+                                <div class="form-text">用戶名將用於登入，請使用英文字母、數字和底線</div>
+                            </div>
+                            
+                            <!-- 電子郵件 -->
+                            <div class="mb-3">
+                                <label for="email" class="form-label">電子郵件 <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           placeholder="請輸入有效的電子郵件地址" required>
+                                </div>
+                                <div class="form-text">我們將發送驗證郵件到此地址</div>
+                            </div>
+                            
+                            <!-- 密碼 -->
+                            <div class="mb-3">
+                                <label for="password" class="form-label">密碼 <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-key"></i></span>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           placeholder="請輸入密碼（至少8個字符）" required
+                                           minlength="8" maxlength="120">
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">密碼應包含大小寫字母、數字和特殊字符</div>
+                            </div>
+                            
+                            <!-- 確認密碼 -->
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label">確認密碼 <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" 
+                                           placeholder="請再次輸入密碼" required
+                                           minlength="8" maxlength="120">
+                                    <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">請確保兩次輸入的密碼一致</div>
+                            </div>
+                            
+                            <!-- 暱稱 -->
+                            <div class="mb-3">
+                                <label for="nickname" class="form-label">暱稱</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                    <input type="text" class="form-control" id="nickname" name="nickname" 
+                                           placeholder="請輸入您的暱稱（選填）" maxlength="50">
+                                </div>
+                                <div class="form-text">暱稱將顯示在您的個人資料頁面</div>
+                            </div>
+                            
+                            <!-- 星座 -->
+                            <div class="mb-3">
+                                <label for="zodiacSign" class="form-label">星座</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-stars"></i></span>
+                                    <select class="form-select" id="zodiacSign" name="zodiacSign">
+                                        <option value="" selected>請選擇您的星座（選填）</option>
+                                        <option value="水瓶座">水瓶座 (1月20日-2月18日)</option>
+                                        <option value="雙魚座">雙魚座 (2月19日-3月20日)</option>
+                                        <option value="牡羊座">牡羊座 (3月21日-4月19日)</option>
+                                        <option value="金牛座">金牛座 (4月20日-5月20日)</option>
+                                        <option value="雙子座">雙子座 (5月21日-6月21日)</option>
+                                        <option value="巨蟹座">巨蟹座 (6月22日-7月22日)</option>
+                                        <option value="獅子座">獅子座 (7月23日-8月22日)</option>
+                                        <option value="處女座">處女座 (8月23日-9月22日)</option>
+                                        <option value="天秤座">天秤座 (9月23日-10月23日)</option>
+                                        <option value="天蠍座">天蠍座 (10月24日-11月22日)</option>
+                                        <option value="射手座">射手座 (11月23日-12月21日)</option>
+                                        <option value="摩羯座">摩羯座 (12月22日-1月19日)</option>
+                                    </select>
+                                </div>
+                                <div class="form-text">星座將顯示在您的個人資料頁面</div>
+                            </div>
+                            
+                            <!-- 同意條款 -->
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="agreeTerms" name="agreeTerms" required>
+                                <label class="form-check-label" for="agreeTerms">
+                                    我已閱讀並同意 <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">服務條款</a> 和 <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">隱私政策</a>
+                                </label>
+                            </div>
+                            
+                            <!-- 註冊按鈕 -->
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-person-plus"></i> 註冊
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <!-- 其他選項 -->
+                        <div class="mt-3 text-center">
+                            <p class="mb-0">
+                                已有帳號？ <a th:href="@{/login}" class="text-decoration-none">立即登入</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 服務條款模態框 -->
+        <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="termsModalLabel">服務條款</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6>1. 接受條款</h6>
+                        <p>歡迎使用電商系統！通過註冊和使用本網站，您同意遵守以下服務條款。如果您不同意這些條款，請勿使用本網站。</p>
+                        
+                        <h6>2. 帳號註冊</h6>
+                        <p>您必須提供真實、準確、完整的個人資料，並在資料變更時及時更新。您有責任保護您的帳號和密碼安全，並對所有使用您帳號進行的活動負責。</p>
+                        
+                        <h6>3. 使用規則</h6>
+                        <p>您同意不會使用本網站進行任何違法或未經授權的活動，包括但不限於：發布侵犯他人知識產權的內容、發布虛假或誤導性信息、干擾網站正常運行等。</p>
+                        
+                        <h6>4. 商品和交易</h6>
+                        <p>本網站上的商品信息僅供參考，實際商品以收到的實物為準。我們保留隨時調整價格、暫停或終止銷售任何商品的權利。</p>
+                        
+                        <h6>5. 責任限制</h6>
+                        <p>在法律允許的最大範圍內，本網站對於任何直接、間接、附帶、特殊、懲罰性或後果性損害不承擔責任。</p>
+                        
+                        <h6>6. 修改條款</h6>
+                        <p>我們保留隨時修改這些條款的權利。修改後的條款將在本網站上發布，並自發布之日起生效。繼續使用本網站將視為您接受修改後的條款。</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">我已閱讀並同意</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 隱私政策模態框 -->
+        <div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="privacyModalLabel">隱私政策</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6>1. 收集的信息</h6>
+                        <p>我們收集的個人信息包括但不限於：姓名、電子郵件地址、聯繫方式、配送地址、支付信息等。我們也會自動收集使用數據，如IP地址、瀏覽器類型、訪問時間等。</p>
+                        
+                        <h6>2. 信息使用</h6>
+                        <p>我們使用收集的信息來：處理訂單、提供客戶服務、改進網站、發送營銷信息（如果您同意）、防止欺詐等。</p>
+                        
+                        <h6>3. 信息共享</h6>
+                        <p>我們不會出售或出租您的個人信息給第三方。我們可能與服務提供商（如支付處理商、配送公司）共享必要的信息以完成交易。</p>
+                        
+                        <h6>4. 數據安全</h6>
+                        <p>我們採取合理的安全措施來保護您的個人信息，防止未經授權的訪問、使用或披露。</p>
+                        
+                        <h6>5. Cookie使用</h6>
+                        <p>我們使用Cookie和類似技術來改善用戶體驗、分析網站使用情況和個性化內容。您可以通過瀏覽器設置控制Cookie。</p>
+                        
+                        <h6>6. 您的權利</h6>
+                        <p>您有權訪問、更正、刪除您的個人信息，以及限制或反對我們處理您的數據。請通過聯繫方式與我們聯繫以行使這些權利。</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">我已閱讀並同意</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 切換密碼可見性
+            const togglePassword = document.getElementById('togglePassword');
+            const password = document.getElementById('password');
+            
+            togglePassword.addEventListener('click', function() {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                
+                // 切換眼睛圖標
+                this.querySelector('i').classList.toggle('bi-eye');
+                this.querySelector('i').classList.toggle('bi-eye-slash');
+            });
+            
+            // 切換確認密碼可見性
+            const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+            const confirmPassword = document.getElementById('confirmPassword');
+            
+            toggleConfirmPassword.addEventListener('click', function() {
+                const type = confirmPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+                confirmPassword.setAttribute('type', type);
+                
+                // 切換眼睛圖標
+                this.querySelector('i').classList.toggle('bi-eye');
+                this.querySelector('i').classList.toggle('bi-eye-slash');
+            });
+            
+            // 表單提交前的處理
+            const registerForm = document.getElementById('registerForm');
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            
+            registerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // 檢查密碼是否一致
+                if (password.value !== confirmPassword.value) {
+                    errorText.textContent = '兩次輸入的密碼不一致，請重新輸入。';
+                    errorMessage.classList.remove('d-none');
+                    return;
+                }
+                
+                // 獲取表單數據
+                const formData = {
+                    username: document.getElementById('username').value,
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value,
+                    nickname: document.getElementById('nickname').value,
+                    zodiacSign: document.getElementById('zodiacSign').value,
+                    roles: ["user"] // 默認為普通用戶角色
+                };
+                
+                // 發送註冊請求
+                fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.message || '註冊失敗，請稍後再試。');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 註冊成功，顯示成功訊息並重定向到登入頁面
+                    alert('註冊成功！請登入您的帳號。');
+                    window.location.href = '/login';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // 顯示錯誤訊息
+                    errorText.textContent = error.message;
+                    errorMessage.classList.remove('d-none');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

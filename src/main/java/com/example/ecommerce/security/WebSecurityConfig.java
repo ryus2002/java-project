@@ -128,6 +128,11 @@ public class WebSecurityConfig {
                     .requestMatchers("/swagger-ui/**").permitAll()
                     .requestMatchers("/swagger-ui.html").permitAll()
                     .requestMatchers("/api-docs/**").permitAll()
+                    // 允許所有人訪問靜態資源
+                    .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
+                    // 允許所有人訪問公共頁面
+                    .requestMatchers("/", "/login", "/register", "/forgot-password").permitAll()
+                    .requestMatchers("/products", "/products/**").permitAll()
                     // 其他所有請求需要身份驗證
                     .anyRequest().authenticated()
             );

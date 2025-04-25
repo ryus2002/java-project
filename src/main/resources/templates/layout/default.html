@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      th:fragment="html(title, main, links, scripts)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:replace="${title}">電商系統</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- 自定義 CSS -->
+    <link th:href="@{/css/style.css}" rel="stylesheet">
+    
+    <!-- 額外的CSS -->
+    <th:block th:replace="${links}" />
+    
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex: 1;
+            padding: 20px 0;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 頁頭 -->
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+            <div class="container">
+                <a class="navbar-brand" th:href="@{/}">
+                    <i class="bi bi-shop"></i> 電商系統
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/}">首頁</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/products}">商品列表</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                商品分類
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li th:each="category : ${categories}">
+                                    <a class="dropdown-item" th:href="@{/products(categoryId=${category.id})}" 
+                                       th:text="${category.name}">分類名稱</a>
+                                </li>
+                                <li th:if="${#lists.isEmpty(categories)}">
+                                    <span class="dropdown-item disabled">暫無分類</span>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="nav-item" sec:authorize="hasRole('ROLE_ADMIN')">
+                            <a class="nav-link" th:href="@{/admin}">管理後台</a>
+                        </li>
+                    </ul>
+                    
+                    <!-- 搜索框 -->
+                    <form class="d-flex me-2" th:action="@{/products}" method="get">
+                        <input class="form-control me-2" type="search" placeholder="搜索商品" name="keyword"
+                               th:value="${param.keyword}" aria-label="搜索">
+                        <button class="btn btn-outline-primary" type="submit">搜索</button>
+                    </form>
+                    
+                    <!-- 用戶菜單 -->
+                    <ul class="navbar-nav">
+                        <li class="nav-item" sec:authorize="!isAuthenticated()">
+                            <a class="nav-link" th:href="@{/login}">登入</a>
+                        </li>
+                        <li class="nav-item" sec:authorize="!isAuthenticated()">
+                            <a class="nav-link" th:href="@{/register}">註冊</a>
+                        </li>
+                        <li class="nav-item" sec:authorize="isAuthenticated()">
+                            <a class="nav-link position-relative" th:href="@{/cart}">
+                                <i class="bi bi-cart"></i> 購物車
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                      th:if="${cartItemCount != null && cartItemCount > 0}"
+                                      th:text="${cartItemCount}">
+                                    0
+                                </span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle"></i> <span sec:authentication="name">用戶名</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" th:href="@{/profile}">個人資料</a></li>
+                                <li><a class="dropdown-item" th:href="@{/orders}">我的訂單</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form th:action="@{/logout}" method="post">
+                                        <button class="dropdown-item" type="submit">登出</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- 主要內容 -->
+    <div class="container">
+        <th:block th:replace="${main}" />
+    </div>
+    
+    <!-- 頁尾 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h5>關於我們</h5>
+                    <p>電商系統是一個基於Spring Boot開發的完整電子商務解決方案，提供會員管理、商品管理、購物車管理、訂單管理和支付管理等功能。</p>
+                </div>
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h5>聯繫我們</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-envelope"></i> support@example.com</li>
+                        <li><i class="bi bi-telephone"></i> +886 2 1234 5678</li>
+                        <li><i class="bi bi-geo-alt"></i> 台北市信義區101大樓</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5>關注我們</h5>
+                    <div class="d-flex">
+                        <a href="#" class="me-2 text-decoration-none">
+                            <i class="bi bi-facebook fs-4"></i>
+                        </a>
+                        <a href="#" class="me-2 text-decoration-none">
+                            <i class="bi bi-twitter fs-4"></i>
+                        </a>
+                        <a href="#" class="me-2 text-decoration-none">
+                            <i class="bi bi-instagram fs-4"></i>
+                        </a>
+                        <a href="#" class="text-decoration-none">
+                            <i class="bi bi-linkedin fs-4"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12 text-center">
+                    <p class="mb-0">&copy; 2025 電商系統. 版權所有.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 額外的JavaScript -->
+    <th:block th:replace="${scripts}" />
+    
+    <!-- 通用JavaScript -->
+    <script>
+        // 獲取和存儲JWT令牌
+        document.addEventListener('DOMContentLoaded', function() {
+            // 從URL參數中獲取token
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            
+            // 如果URL中有token，則存儲它
+            if (token) {
+                localStorage.setItem('token', token);
+                
+                // 移除URL中的token參數
+                urlParams.delete('token');
+                const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+                window.history.replaceState({}, document.title, newUrl);
+            }
+            
+            // 為所有需要授權的請求添加JWT令牌
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options) {
+                options = options || {};
+                options.headers = options.headers || {};
+                
+                // 如果已經有Authorization頭，或者是登入/註冊請求，則不添加令牌
+                if (!options.headers.Authorization && !url.includes('/api/auth/signin') && !url.includes('/api/auth/signup')) {
+                    const token = localStorage.getItem('token');
+                    if (token) {
+                        options.headers.Authorization = 'Bearer ' + token;
+                    }
+                }
+                
+                return originalFetch(url, options);
+            };
+        });
+    </script>
+</body>
+</html>

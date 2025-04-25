@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/default :: html(~{::title}, ~{::main}, ~{::link}, ~{::script})}">
+<head>
+    <title>會員登入 - 電商系統</title>
+    <link rel="stylesheet" href="">
+</head>
+<body>
+    <main>
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">會員登入</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- 登入失敗提示 -->
+                        <div class="alert alert-danger" th:if="${param.error}">
+                            <i class="bi bi-exclamation-triangle-fill"></i> 
+                            登入失敗，請檢查您的用戶名和密碼是否正確。
+                        </div>
+                        
+                        <!-- 登出成功提示 -->
+                        <div class="alert alert-success" th:if="${param.logout}">
+                            <i class="bi bi-check-circle-fill"></i> 
+                            您已成功登出。
+                        </div>
+                        
+                        <!-- 令牌過期提示 -->
+                        <div class="alert alert-warning" th:if="${param.expired}">
+                            <i class="bi bi-exclamation-triangle-fill"></i> 
+                            您的登入狀態已過期，請重新登入。
+                        </div>
+                        
+                        <!-- 登入表單 -->
+                        <form id="loginForm" class="mt-4">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">用戶名或電子郵件</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">密碼</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe">
+                                <label class="form-check-label" for="rememberMe">記住我</label>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">登入</button>
+                                <a th:href="@{/forgot-password}" class="btn btn-link">忘記密碼？</a>
+                            </div>
+                        </form>
+                        
+                        <hr class="my-4">
+                        
+                        <!-- 註冊提示 -->
+                        <div class="text-center">
+                            <p>還沒有帳號？ <a th:href="@{/register}" class="fw-bold">立即註冊</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 切換密碼可見性
+            const togglePassword = document.getElementById('togglePassword');
+            const password = document.getElementById('password');
+            
+            togglePassword.addEventListener('click', function() {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                
+                // 切換眼睛圖標
+                this.querySelector('i').classList.toggle('bi-eye');
+                this.querySelector('i').classList.toggle('bi-eye-slash');
+            });
+            
+            // 處理登入表單提交
+            const loginForm = document.getElementById('loginForm');
+            
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const rememberMe = document.getElementById('rememberMe').checked;
+                
+                // 發送登入請求
+                fetch('/api/auth/signin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('登入失敗');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 存儲JWT令牌
+                    localStorage.setItem('token', data.token);
+                    
+                    // 如果選擇了記住我，則設置較長的過期時間
+                    if (rememberMe) {
+                        // 30天後過期
+                        const expiryDate = new Date();
+                        expiryDate.setDate(expiryDate.getDate() + 30);
+                        localStorage.setItem('tokenExpiry', expiryDate.toISOString());
+                    } else {
+                        // 會話結束後過期
+                        localStorage.setItem('tokenExpiry', 'session');
+                    }
+                    
+                    // 存儲用戶信息
+                    localStorage.setItem('user', JSON.stringify({
+                        id: data.id,
+                        username: data.username,
+                        email: data.email,
+                        roles: data.roles
+                    }));
+                    
+                    // 獲取重定向URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const redirectUrl = urlParams.get('redirect') || '/';
+                    
+                    // 重定向到指定頁面或首頁
+                    window.location.href = redirectUrl;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // 顯示錯誤訊息
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'alert alert-danger';
+                    errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> 登入失敗，請檢查您的用戶名和密碼是否正確。';
+                    
+                    // 移除之前的錯誤訊息
+                    const existingError = loginForm.querySelector('.alert-danger');
+                    if (existingError) {
+                        existingError.remove();
+                    }
+                    
+                    // 插入新的錯誤訊息
+                    loginForm.insertBefore(errorDiv, loginForm.firstChild);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
