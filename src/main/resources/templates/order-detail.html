@@ -1,0 +1,166 @@
+<!-- 訂單詳情頁面的支付處理代碼 -->
+<script>
+            document.addEventListener('DOMContentLoaded', function() {
+    // 初始化支付表單
+    initPaymentForm();
+    
+    // 支付按鈕點擊事件
+    const payButton = document.getElementById('pay-order-button');
+    if (payButton) {
+        payButton.addEventListener('click', function() {
+            // 顯示支付模態框
+            const paymentModal = new bootstrap.Modal(document.getElementById('payment-modal'));
+            paymentModal.show();
+        });
+    }
+    
+    // 支付表單提交
+    const paymentForm = document.getElementById('payment-form');
+    if (paymentForm) {
+        paymentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            processOrderPayment();
+        });
+    }
+});
+
+// 初始化支付表單
+function initPaymentForm() {
+                // 支付方式切換
+    const paymentMethodSelect = document.getElementById('payment-method');
+    if (paymentMethodSelect) {
+        paymentMethodSelect.addEventListener('change', function() {
+            togglePaymentFields(this.value);
+        });
+        
+        // 初始化顯示
+        togglePaymentFields(paymentMethodSelect.value);
+    }
+    
+    // 信用卡號碼格式化
+    const cardNumberInput = document.getElementById('card-number');
+    if (cardNumberInput) {
+        cardNumberInput.addEventListener('input', function(e) {
+            this.value = PaymentProcessor.formatCardNumber(this.value);
+        });
+    }
+    
+    // 到期日格式化
+    const expiryDateInput = document.getElementById('expiry-date');
+    if (expiryDateInput) {
+        expiryDateInput.addEventListener('input', function(e) {
+            this.value = PaymentProcessor.formatExpiryDate(this.value);
+        });
+    }
+    
+    // CVV限制為數字
+    const cvvInput = document.getElementById('cvv');
+    if (cvvInput) {
+        cvvInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/\D/g, '').substring(0, 4);
+        });
+    }
+}
+
+// 根據支付方式顯示/隱藏相應的欄位
+function togglePaymentFields(paymentMethod) {
+    const creditCardFields = document.getElementById('credit-card-fields');
+    const bankTransferFields = document.getElementById('bank-transfer-fields');
+    const walletFields = document.getElementById('wallet-fields');
+                        
+    // 隱藏所有支付欄位
+    if (creditCardFields) creditCardFields.style.display = 'none';
+    if (bankTransferFields) bankTransferFields.style.display = 'none';
+    if (walletFields) walletFields.style.display = 'none';
+    
+    // 顯示選中的支付方式欄位
+    if (paymentMethod === 'CREDIT_CARD' && creditCardFields) {
+        creditCardFields.style.display = 'block';
+    } else if (paymentMethod === 'BANK_TRANSFER' && bankTransferFields) {
+        bankTransferFields.style.display = 'block';
+    } else if (paymentMethod === 'WALLET' && walletFields) {
+        walletFields.style.display = 'block';
+                        }
+                }
+                
+// 處理訂單支付
+function processOrderPayment() {
+    // 顯示載入指示器
+    showLoading();
+    
+    // 獲取訂單ID
+    const orderId = document.getElementById('order-id').value;
+    
+    // 獲取支付方式
+                        const paymentMethod = document.getElementById('payment-method').value;
+                        
+    // 防止重複提交
+    const submitButton = document.getElementById('submit-payment');
+    submitButton.disabled = true;
+    
+    // 獲取支付詳細資訊
+    const paymentData = getPaymentData(paymentMethod);
+    
+    // 驗證支付資訊
+    const validation = PaymentProcessor.validatePaymentForm({
+                            paymentMethod: paymentMethod,
+        ...paymentData
+    });
+    
+    if (!validation.isValid) {
+        hideLoading();
+        showToast(validation.errors[0], 'error');
+        submitButton.disabled = false;
+        return;
+    }
+    
+    // 處理支付
+    PaymentProcessor.processPayment(paymentMethod, paymentData, orderId)
+        .then(result => {
+            hideLoading();
+            
+            // 關閉模態框
+            const paymentModal = bootstrap.Modal.getInstance(document.getElementById('payment-modal'));
+            if (paymentModal) {
+                paymentModal.hide();
+            }
+            
+            // 顯示成功訊息
+            showToast('付款處理成功', 'success');
+            
+            // 延遲重新載入頁面
+            setTimeout(() => {
+                                window.location.reload();
+            }, 1500);
+                        })
+                        .catch(error => {
+            hideLoading();
+            submitButton.disabled = false;
+                            console.error('Error:', error);
+            showToast('支付處理時發生錯誤: ' + error.message, 'error');
+                        });
+                }
+
+// 根據支付方式獲取支付詳細資訊
+function getPaymentData(paymentMethod) {
+    if (paymentMethod === 'CREDIT_CARD') {
+        return {
+            cardNumber: document.getElementById('card-number').value.trim(),
+            expiryDate: document.getElementById('expiry-date').value.trim(),
+            cvv: document.getElementById('cvv').value.trim(),
+            cardholderName: document.getElementById('cardholder-name').value.trim()
+        };
+    } else if (paymentMethod === 'BANK_TRANSFER') {
+        return {
+            bankAccount: document.getElementById('bank-account').value.trim(),
+            bankName: document.getElementById('bank-name').value.trim()
+        };
+    } else if (paymentMethod === 'WALLET') {
+        return {
+            walletId: document.getElementById('wallet-id').value.trim()
+        };
+    }
+    
+    return {};
+}
+</script>

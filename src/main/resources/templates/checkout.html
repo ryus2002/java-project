@@ -1,0 +1,222 @@
+<script>
+            document.addEventListener('DOMContentLoaded', function() {
+            // 初始化信用卡輸入格式化
+            initPaymentFormFormatting();
+            
+            // 結帳表單提交處理
+            const checkoutForm = document.getElementById('checkout-form');
+            if (checkoutForm) {
+                checkoutForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    processCheckout();
+                });
+            }
+            
+            // 支付方式切換事件
+            const paymentMethodRadios = document.querySelectorAll('input[name="paymentMethod"]');
+            paymentMethodRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    togglePaymentFields(this.value);
+                });
+            });
+            
+            // 初始化顯示當前選中的支付方式欄位
+            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+            if (selectedPaymentMethod) {
+                togglePaymentFields(selectedPaymentMethod.value);
+            }
+        });
+        
+        // 初始化支付表單格式化
+        function initPaymentFormFormatting() {
+            // 信用卡號碼格式化
+            const cardNumberInput = document.getElementById('card_number');
+            if (cardNumberInput) {
+                cardNumberInput.addEventListener('input', function(e) {
+                    this.value = PaymentProcessor.formatCardNumber(this.value);
+                });
+            }
+                    
+            // 到期日格式化
+            const expiryDateInput = document.getElementById('expiry_date');
+            if (expiryDateInput) {
+                expiryDateInput.addEventListener('input', function(e) {
+                    this.value = PaymentProcessor.formatExpiryDate(this.value);
+                });
+            }
+            
+            // CVV限制為數字
+            const cvvInput = document.getElementById('cvv');
+            if (cvvInput) {
+                cvvInput.addEventListener('input', function(e) {
+                    this.value = this.value.replace(/\D/g, '').substring(0, 4);
+                });
+            }
+        }
+        
+        // 根據支付方式顯示/隱藏相應的欄位
+        function togglePaymentFields(paymentMethod) {
+            const creditCardFields = document.getElementById('credit-card-fields');
+            const bankTransferFields = document.getElementById('bank-transfer-fields');
+            const walletFields = document.getElementById('wallet-fields');
+            
+            // 隱藏所有支付欄位
+            if (creditCardFields) creditCardFields.style.display = 'none';
+            if (bankTransferFields) bankTransferFields.style.display = 'none';
+            if (walletFields) walletFields.style.display = 'none';
+            
+            // 顯示選中的支付方式欄位
+            if (paymentMethod === 'CREDIT_CARD' && creditCardFields) {
+                creditCardFields.style.display = 'block';
+            } else if (paymentMethod === 'BANK_TRANSFER' && bankTransferFields) {
+                bankTransferFields.style.display = 'block';
+            } else if (paymentMethod === 'WALLET' && walletFields) {
+                walletFields.style.display = 'block';
+            }
+        }
+        
+        // 處理結帳
+        function processCheckout() {
+            // 顯示載入指示器
+            showLoading();
+            
+            // 獲取表單資料
+            const formData = getFormData();
+            
+            // 驗證基本訂單資訊
+            if (!validateOrderInfo(formData)) {
+                hideLoading();
+                return;
+            }
+            
+            // 防止重複提交
+            const submitButton = document.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            
+            // 獲取支付方式
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            
+            // 獲取支付詳細資訊
+            const paymentData = getPaymentData(paymentMethod);
+            
+            // 驗證支付資訊
+            const validation = PaymentProcessor.validatePaymentForm({
+                paymentMethod: paymentMethod,
+                ...paymentData
+            });
+            
+            if (!validation.isValid) {
+                hideLoading();
+                showToast(validation.errors[0], 'error');
+                submitButton.disabled = false;
+                return;
+            }
+            
+            // 處理支付並提交訂單
+            PaymentProcessor.processPayment(paymentMethod, paymentData)
+                .then(processedPayment => {
+                    // 準備訂單資料
+                    const orderData = {
+                        recipientName: formData.recipientName,
+                        recipientPhone: formData.recipientPhone,
+                        shippingAddress: formData.shippingAddress,
+                        note: formData.note,
+                        paymentMethod: paymentMethod,
+                        paymentDetails: processedPayment
+                    };
+                    
+                    // 生成訂單請求ID
+                    const orderRequestId = 'order_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
+            // 提交訂單
+            return fetch('/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCSRFToken(),
+                    'X-Order-Request-ID': orderRequestId
+                },
+                body: JSON.stringify(orderData)
+            });
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(response.status === 400 ? '訂單資料有誤' : '訂單提交失敗');
+            }
+            return response.json();
+        })
+        .then(orderResult => {
+            hideLoading();
+            // 訂單創建成功，導向訂單完成頁面
+            window.location.href = `/orders/${orderResult.id}/complete`;
+        })
+        .catch(error => {
+            hideLoading();
+            submitButton.disabled = false;
+            console.error('Error:', error);
+            showToast('處理訂單時發生錯誤: ' + error.message, 'error');
+        });
+}
+            
+// 獲取表單基本資料
+function getFormData() {
+    return {
+        recipientName: document.getElementById('name').value.trim(),
+        recipientPhone: document.getElementById('phone').value.trim(),
+        shippingAddress: document.getElementById('address').value.trim(),
+        note: document.getElementById('note') ? document.getElementById('note').value.trim() : ''
+    };
+}
+
+// 驗證訂單基本資訊
+function validateOrderInfo(formData) {
+    // 驗證收件人姓名
+    if (!formData.recipientName) {
+        showToast('請輸入收件人姓名', 'error');
+        return false;
+    }
+    
+    // 驗證收件人電話
+    if (!formData.recipientPhone) {
+        showToast('請輸入收件人電話', 'error');
+        return false;
+    }
+    
+            // 驗證電話格式
+            if (!/^[0-9]{8,10}$/.test(formData.recipientPhone.replace(/-/g, ''))) {
+        showToast('請輸入有效的電話號碼', 'error');
+        return false;
+    }
+    
+    // 驗證收件地址
+    if (!formData.shippingAddress) {
+        showToast('請輸入收件地址', 'error');
+        return false;
+    }
+    
+    return true;
+}
+
+// 根據支付方式獲取支付詳細資訊
+function getPaymentData(paymentMethod) {
+    if (paymentMethod === 'CREDIT_CARD') {
+        return {
+            cardNumber: document.getElementById('card_number').value.trim(),
+            expiryDate: document.getElementById('expiry_date').value.trim(),
+            cvv: document.getElementById('cvv').value.trim(),
+            cardholderName: document.getElementById('cardholder_name').value.trim()
+        };
+    } else if (paymentMethod === 'BANK_TRANSFER') {
+        return {
+            bankAccount: document.getElementById('bank_account').value.trim(),
+            bankName: document.getElementById('bank_name').value.trim()
+        };
+    } else if (paymentMethod === 'WALLET') {
+        return {
+            walletId: document.getElementById('wallet_id').value.trim()
+        };
+    }
+    
+    return {};
+}
+</script>

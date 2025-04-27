@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/admin :: html(~{::title}, ~{::main}, ~{::link}, ~{::script})}">
+<head>
+    <title>商品管理 - 電商系統管理後台</title>
+    <link rel="stylesheet" href="">
+</head>
+<body>
+    <main>
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">商品管理</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/admin">管理後台</a></li>
+                <li class="breadcrumb-item active">商品管理</li>
+            </ol>
+            
+            <!-- 操作按鈕 -->
+            <div class="mb-4">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                    <i class="bi bi-plus-circle"></i> 新增商品
+                </button>
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                    <i class="bi bi-folder-plus"></i> 新增分類
+                </button>
+            </div>
+            
+            <!-- 商品列表 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-table"></i>
+                    商品列表
+                </div>
+                <div class="card-body">
+                    <table id="productsTable" class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>商品圖片</th>
+                                <th>商品名稱</th>
+                                <th>分類</th>
+                                <th>價格</th>
+                                <th>庫存</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsList">
+                            <!-- 商品列表將通過JavaScript動態加載 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 分類列表 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-folder"></i>
+                    分類列表
+                </div>
+                <div class="card-body">
+                    <table id="categoriesTable" class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>分類名稱</th>
+                                <th>描述</th>
+                                <th>商品數量</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesList">
+                            <!-- 分類列表將通過JavaScript動態加載 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 新增商品模態框 -->
+        <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addProductModalLabel">新增商品</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addProductForm">
+                            <div class="mb-3">
+                                <label for="productName" class="form-label">商品名稱</label>
+                                <input type="text" class="form-control" id="productName" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productCategory" class="form-label">商品分類</label>
+                                <select class="form-select" id="productCategory" name="categoryId" required>
+                                    <!-- 分類選項將通過JavaScript動態加載 -->
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productPrice" class="form-label">商品價格</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="productPrice" name="price" min="0" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productStock" class="form-label">庫存數量</label>
+                                <input type="number" class="form-control" id="productStock" name="stock" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productImage" class="form-label">商品圖片URL</label>
+                                <input type="text" class="form-control" id="productImage" name="imageUrl">
+                            </div>
+                            <div class="mb-3">
+                                <label for="productDescription" class="form-label">商品描述</label>
+                                <textarea class="form-control" id="productDescription" name="description" rows="3"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="saveProductBtn">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 編輯商品模態框 -->
+        <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editProductModalLabel">編輯商品</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editProductForm">
+                            <input type="hidden" id="editProductId" name="id">
+                            <div class="mb-3">
+                                <label for="editProductName" class="form-label">商品名稱</label>
+                                <input type="text" class="form-control" id="editProductName" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editProductCategory" class="form-label">商品分類</label>
+                                <select class="form-select" id="editProductCategory" name="categoryId" required>
+                                    <!-- 分類選項將通過JavaScript動態加載 -->
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editProductPrice" class="form-label">商品價格</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="editProductPrice" name="price" min="0" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editProductStock" class="form-label">庫存數量</label>
+                                <input type="number" class="form-control" id="editProductStock" name="stock" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editProductImage" class="form-label">商品圖片URL</label>
+                                <input type="text" class="form-control" id="editProductImage" name="imageUrl">
+                            </div>
+                            <div class="mb-3">
+                                <label for="editProductDescription" class="form-label">商品描述</label>
+                                <textarea class="form-control" id="editProductDescription" name="description" rows="3"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="updateProductBtn">更新</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 新增分類模態框 -->
+        <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addCategoryModalLabel">新增分類</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addCategoryForm">
+                            <div class="mb-3">
+                                <label for="categoryName" class="form-label">分類名稱</label>
+                                <input type="text" class="form-control" id="categoryName" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="categoryDescription" class="form-label">分類描述</label>
+                                <textarea class="form-control" id="categoryDescription" name="description" rows="3"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="saveCategoryBtn">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 編輯分類模態框 -->
+        <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editCategoryModalLabel">編輯分類</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editCategoryForm">
+                            <input type="hidden" id="editCategoryId" name="id">
+                            <div class="mb-3">
+                                <label for="editCategoryName" class="form-label">分類名稱</label>
+                                <input type="text" class="form-control" id="editCategoryName" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editCategoryDescription" class="form-label">分類描述</label>
+                                <textarea class="form-control" id="editCategoryDescription" name="description" rows="3"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="updateCategoryBtn">更新</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 獲取JWT令牌
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // 如果沒有令牌，重定向到登入頁面
+                window.location.href = '/login?redirect=/admin/products';
+                return;
+            }
+            
+            // 檢查用戶角色
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (!user.roles || !user.roles.includes('ROLE_ADMIN')) {
+                // 如果不是管理員，重定向到首頁
+                alert('您沒有管理員權限');
+                window.location.href = '/';
+                return;
+            }
+            
+            // 加載分類列表
+            loadCategories();
+            
+            // 加載商品列表
+            loadProducts();
+            
+            // 新增商品
+            document.getElementById('saveProductBtn').addEventListener('click', function() {
+                const form = document.getElementById('addProductForm');
+                const formData = new FormData(form);
+                const product = {};
+                
+                for (let [key, value] of formData.entries()) {
+                    product[key] = value;
+                }
+                
+                // 將價格和庫存轉換為數字
+                product.price = parseFloat(product.price);
+                product.stock = parseInt(product.stock);
+                product.categoryId = parseInt(product.categoryId);
+                
+                // 發送API請求
+                fetch('/api/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(product)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('新增商品失敗');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 關閉模態框
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+                    modal.hide();
+                    
+                    // 清空表單
+                    form.reset();
+                    
+                    // 重新加載商品列表
+                    loadProducts();
+                    
+                    // 顯示成功訊息
+                    alert('商品新增成功');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('新增商品失敗：' + error.message);
+                });
+            });
+            
+            // 新增分類
+            document.getElementById('saveCategoryBtn').addEventListener('click', function() {
+                const form = document.getElementById('addCategoryForm');
+                const formData = new FormData(form);
+                const category = {};
+                
+                for (let [key, value] of formData.entries()) {
+                    category[key] = value;
+                }
+                
+                // 發送API請求
+                fetch('/api/categories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(category)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('新增分類失敗');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 關閉模態框
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
+                    modal.hide();
+                    
+                    // 清空表單
+                    form.reset();
+                    
+                    // 重新加載分類列表
+                    loadCategories();
+                    
+                    // 顯示成功訊息
+                    alert('分類新增成功');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('新增分類失敗：' + error.message);
+                });
+            });
+            
+            // 更新商品
+            document.getElementById('updateProductBtn').addEventListener('click', function() {
+                const form = document.getElementById('editProductForm');
+                const formData = new FormData(form);
+                const product = {};
+                
+                for (let [key, value] of formData.entries()) {
+                    product[key] = value;
+                }
+                
+                // 將價格和庫存轉換為數字
+                product.price = parseFloat(product.price);
+                product.stock = parseInt(product.stock);
+                product.categoryId = parseInt(product.categoryId);
+                
+                // 發送API請求
+                fetch(`/api/products/${product.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(product)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('更新商品失敗');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 關閉模態框
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+                    modal.hide();
+                    
+                    // 重新加載商品列表
+                    loadProducts();
+                    
+                    // 顯示成功訊息
+                    alert('商品更新成功');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('更新商品失敗：' + error.message);
+                });
+            });
+            
+            // 更新分類
+            document.getElementById('updateCategoryBtn').addEventListener('click', function() {
+                const form = document.getElementById('editCategoryForm');
+                const formData = new FormData(form);
+                const category = {};
+                
+                for (let [key, value] of formData.entries()) {
+                    category[key] = value;
+                }
+                
+                // 發送API請求
+                fetch(`/api/categories/${category.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(category)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('更新分類失敗');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 關閉模態框
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editCategoryModal'));
+                    modal.hide();
+                    
+                    // 重新加載分類列表
+                    loadCategories();
+                    
+                    // 顯示成功訊息
+                    alert('分類更新成功');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('更新分類失敗：' + error.message);
+                });
+            });
+            
+            // 加載分類列表
+            function loadCategories() {
+                fetch('/api/categories', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(categories => {
+                    // 更新分類下拉選單
+                    const productCategorySelect = document.getElementById('productCategory');
+                    const editProductCategorySelect = document.getElementById('editProductCategory');
+                    
+                    // 清空選項
+                    productCategorySelect.innerHTML = '';
+                    editProductCategorySelect.innerHTML = '';
+                    
+                    // 添加選項
+                    categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category.id;
+                        option.textContent = category.name;
+                        
+                        const optionClone = option.cloneNode(true);
+                        
+                        productCategorySelect.appendChild(option);
+                        editProductCategorySelect.appendChild(optionClone);
+                    });
+                    
+                    // 更新分類列表
+                    const categoriesList = document.getElementById('categoriesList');
+                    categoriesList.innerHTML = '';
+                    
+                    categories.forEach(category => {
+                        const row = document.createElement('tr');
+                        
+                        row.innerHTML = `
+                            <td>${category.id}</td>
+                            <td>${category.name}</td>
+                            <td>${category.description || '-'}</td>
+                            <td>${category.products ? category.products.length : 0}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-category" data-id="${category.id}">
+                                    <i class="bi bi-pencil"></i> 編輯
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-category" data-id="${category.id}">
+                                    <i class="bi bi-trash"></i> 刪除
+                                </button>
+                            </td>
+                        `;
+                        
+                        categoriesList.appendChild(row);
+                    });
+                    
+                    // 添加編輯分類事件
+                    document.querySelectorAll('.edit-category').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const categoryId = this.getAttribute('data-id');
+                            
+                            // 獲取分類詳情
+                            fetch(`/api/categories/${categoryId}`, {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(category => {
+                                // 填充表單
+                                document.getElementById('editCategoryId').value = category.id;
+                                document.getElementById('editCategoryName').value = category.name;
+                                document.getElementById('editCategoryDescription').value = category.description || '';
+                                
+                                // 打開模態框
+                                const modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+                                modal.show();
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('獲取分類詳情失敗：' + error.message);
+                            });
+                        });
+                    });
+                    
+                    // 添加刪除分類事件
+                    document.querySelectorAll('.delete-category').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const categoryId = this.getAttribute('data-id');
+                            
+                            if (confirm('確定要刪除此分類嗎？')) {
+                                // 發送刪除請求
+                                fetch(`/api/categories/${categoryId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`
+                                    }
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error('刪除分類失敗');
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    // 重新加載分類列表
+                                    loadCategories();
+                                    
+                                    // 顯示成功訊息
+                                    alert('分類刪除成功');
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('刪除分類失敗：' + error.message);
+                                });
+                            }
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('加載分類列表失敗：' + error.message);
+                });
+            }
+            
+            // 加載商品列表
+            function loadProducts() {
+                fetch('/api/products', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(products => {
+                    const productsList = document.getElementById('productsList');
+                    productsList.innerHTML = '';
+                    
+                    products.forEach(product => {
+                        const row = document.createElement('tr');
+                        
+                        row.innerHTML = `
+                            <td>${product.id}</td>
+                            <td>
+                                <img src="${product.imageUrl || '/images/no-image.png'}" alt="${product.name}" 
+                                     style="width: 50px; height: 50px; object-fit: cover;">
+                            </td>
+                            <td>${product.name}</td>
+                            <td>${product.categoryName}</td>
+                            <td>$${product.price.toFixed(2)}</td>
+                            <td>${product.stock}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-product" data-id="${product.id}">
+                                    <i class="bi bi-pencil"></i> 編輯
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-product" data-id="${product.id}">
+                                    <i class="bi bi-trash"></i> 刪除
+                                </button>
+                            </td>
+                        `;
+                        
+                        productsList.appendChild(row);
+                    });
+                    
+                    // 添加編輯商品事件
+                    document.querySelectorAll('.edit-product').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const productId = this.getAttribute('data-id');
+                            
+                            // 獲取商品詳情
+                            fetch(`/api/products/${productId}`, {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(product => {
+                                // 填充表單
+                                document.getElementById('editProductId').value = product.id;
+                                document.getElementById('editProductName').value = product.name;
+                                document.getElementById('editProductCategory').value = product.categoryId;
+                                document.getElementById('editProductPrice').value = product.price;
+                                document.getElementById('editProductStock').value = product.stock;
+                                document.getElementById('editProductImage').value = product.imageUrl || '';
+                                document.getElementById('editProductDescription').value = product.description || '';
+                                
+                                // 打開模態框
+                                const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
+                                modal.show();
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('獲取商品詳情失敗：' + error.message);
+                            });
+                        });
+                    });
+                    
+                    // 添加刪除商品事件
+                    document.querySelectorAll('.delete-product').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const productId = this.getAttribute('data-id');
+                            
+                            if (confirm('確定要刪除此商品嗎？')) {
+                                // 發送刪除請求
+                                fetch(`/api/products/${productId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`
+                                    }
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error('刪除商品失敗');
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    // 重新加載商品列表
+                                    loadProducts();
+                                    
+                                    // 顯示成功訊息
+                                    alert('商品刪除成功');
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('刪除商品失敗：' + error.message);
+                                });
+                            }
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('加載商品列表失敗：' + error.message);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

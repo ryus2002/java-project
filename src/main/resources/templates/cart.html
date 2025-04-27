@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>購物車</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="container mt-5">
+            <h2>購物車</h2>
+            
+            <div class="alert alert-info" th:if="${#lists.isEmpty(cart.items)}">
+                您的購物車是空的，<a th:href="@{/products}">繼續購物</a>
+            </div>
+            
+            <div th:unless="${#lists.isEmpty(cart.items)}">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>商品</th>
+                            <th>單價</th>
+                            <th>數量</th>
+                            <th>小計</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="item : ${cart.items}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img th:if="${item.imageUrl}" th:src="${item.imageUrl}" width="50" class="me-3" alt="Product Image">
+                                    <a th:href="@{/products/{id}(id=${item.productId})}" th:text="${item.productName}">商品名稱</a>
+                                </div>
+                            </td>
+                            <td th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 2, 'POINT')}">0.00</td>
+                            <td>
+                                <div class="input-group" style="width: 120px;">
+                                    <button class="btn btn-outline-secondary btn-sm quantity-btn" 
+                                            th:data-item-id="${item.id}" 
+                                            data-action="decrease">-</button>
+                                    <input type="number" class="form-control text-center quantity-input" 
+                                           th:value="${item.quantity}" min="1" max="99" readonly>
+                                    <button class="btn btn-outline-secondary btn-sm quantity-btn" 
+                                            th:data-item-id="${item.id}" 
+                                            data-action="increase">+</button>
+                                </div>
+                            </td>
+                            <td th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 2, 'POINT')}">0.00</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger remove-item-btn" 
+                                        th:data-item-id="${item.id}">
+                                    <i class="fas fa-trash"></i> 刪除
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold">總計:</td>
+                            <td th:text="${#numbers.formatDecimal(cart.totalAmount, 0, 'COMMA', 2, 'POINT')}">0.00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a th:href="@{/products}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> 繼續購物
+                    </a>
+                    <a th:href="@{/checkout}" class="btn btn-primary">
+                        <i class="fas fa-shopping-cart"></i> 結帳
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- JavaScript for cart operations -->
+        <script th:inline="javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+                // 更新商品數量
+                document.querySelectorAll('.quantity-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const itemId = this.getAttribute('data-item-id');
+                        const action = this.getAttribute('data-action');
+                        const quantityInput = this.parentElement.querySelector('.quantity-input');
+                        let quantity = parseInt(quantityInput.value);
+                        
+                        if (action === 'increase') {
+                            quantity += 1;
+                        } else if (action === 'decrease' && quantity > 1) {
+                            quantity -= 1;
+                        }
+                        
+                        updateCartItem(itemId, quantity);
+                    });
+                });
+                
+                // 刪除商品
+                document.querySelectorAll('.remove-item-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const itemId = this.getAttribute('data-item-id');
+                        removeCartItem(itemId);
+                    });
+                });
+                
+                // 更新購物車項目
+                function updateCartItem(itemId, quantity) {
+                    fetch(`/api/cart/items/${itemId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ quantity: quantity })
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            window.location.reload();
+                        } else {
+                            alert('更新購物車失敗');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('更新購物車時發生錯誤');
+                    });
+                }
+                
+                // 移除購物車項目
+                function removeCartItem(itemId) {
+                    if (confirm('確定要移除此商品嗎？')) {
+                        fetch(`/api/cart/items/${itemId}`, {
+                            method: 'DELETE'
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                window.location.reload();
+                            } else {
+                                alert('刪除商品失敗');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('刪除商品時發生錯誤');
+                        });
+                    }
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

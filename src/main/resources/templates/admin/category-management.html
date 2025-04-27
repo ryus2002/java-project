@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/admin :: html(~{::title}, ~{::main}, ~{::link}, ~{::script})}">
+<head>
+    <title>分類管理 - 電商系統管理後台</title>
+    <link rel="stylesheet" href="">
+</head>
+<body>
+    <main>
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">分類管理</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="/admin">管理後台</a></li>
+                <li class="breadcrumb-item active">分類管理</li>
+            </ol>
+            
+            <!-- 操作按鈕 -->
+            <div class="mb-4">
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                    <i class="bi bi-folder-plus"></i> 新增分類
+                </button>
+            </div>
+            
+            <!-- 分類列表 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-folder"></i>
+                    分類列表
+                </div>
+                <div class="card-body">
+                    <table id="categoriesTable" class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>分類名稱</th>
+                                <th>描述</th>
+                                <th>商品數量</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesList">
+                            <!-- 分類列表將通過JavaScript動態加載 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 新增分類模態框 -->
+        <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addCategoryModalLabel">新增分類</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addCategoryForm">
+                            <div class="mb-3">
+                                <label for="categoryName" class="form-label">分類名稱</label>
+                                <input type="text" class="form-control" id="categoryName" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="categoryDescription" class="form-label">分類描述</label>
+                                <textarea class="form-control" id="categoryDescription" name="description" rows="3"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="saveCategoryBtn">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 編輯分類模態框 -->
+        <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editCategoryModalLabel">編輯分類</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editCategoryForm">
+                            <input type="hidden" id="editCategoryId" name="id">
+                            <div class="mb-3">
+                                <label for="editCategoryName" class="form-label">分類名稱</label>
+                                <input type="text" class="form-control" id="editCategoryName" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editCategoryDescription" class="form-label">分類描述</label>
+                                <textarea class="form-control" id="editCategoryDescription" name="description" rows="3"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="updateCategoryBtn">更新</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 獲取JWT令牌
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // 如果沒有令牌，重定向到登入頁面
+                window.location.href = '/login?redirect=/admin/categories';
+                return;
+            }
+            
+            // 檢查用戶角色
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (!user.roles || !user.roles.includes('ROLE_ADMIN')) {
+                // 如果不是管理員，重定向到首頁
+                alert('您沒有管理員權限');
+                window.location.href = '/';
+                return;
+            }
+            
+            // 加載分類列表
+            loadCategories();
+            
+            // 新增分類
+            document.getElementById('saveCategoryBtn').addEventListener('click', function() {
+                const form = document.getElementById('addCategoryForm');
+                const formData = new FormData(form);
+                const category = {};
+                
+                for (let [key, value] of formData.entries()) {
+                    category[key] = value;
+                }
+                
+                // 發送API請求
+                fetch('/api/categories', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(category)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('新增分類失敗');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 關閉模態框
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
+                    modal.hide();
+                    
+                    // 清空表單
+                    form.reset();
+                    
+                    // 重新加載分類列表
+                    loadCategories();
+                    
+                    // 顯示成功訊息
+                    alert('分類新增成功');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('新增分類失敗：' + error.message);
+                });
+            });
+            
+            // 更新分類
+            document.getElementById('updateCategoryBtn').addEventListener('click', function() {
+                const form = document.getElementById('editCategoryForm');
+                const formData = new FormData(form);
+                const category = {};
+                
+                for (let [key, value] of formData.entries()) {
+                    category[key] = value;
+                }
+                
+                // 發送API請求
+                fetch(`/api/categories/${category.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(category)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('更新分類失敗');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // 關閉模態框
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editCategoryModal'));
+                    modal.hide();
+                    
+                    // 重新加載分類列表
+                    loadCategories();
+                    
+                    // 顯示成功訊息
+                    alert('分類更新成功');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('更新分類失敗：' + error.message);
+                });
+            });
+            
+            // 加載分類列表
+            function loadCategories() {
+                fetch('/api/categories', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
+                .then(response => response.json())
+                .then(categories => {
+                    // 更新分類列表
+                    const categoriesList = document.getElementById('categoriesList');
+                    categoriesList.innerHTML = '';
+                    
+                    categories.forEach(category => {
+                        const row = document.createElement('tr');
+                        
+                        row.innerHTML = `
+                            <td>${category.id}</td>
+                            <td>${category.name}</td>
+                            <td>${category.description || '-'}</td>
+                            <td>${category.products ? category.products.length : 0}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-category" data-id="${category.id}">
+                                    <i class="bi bi-pencil"></i> 編輯
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-category" data-id="${category.id}">
+                                    <i class="bi bi-trash"></i> 刪除
+                                </button>
+                            </td>
+                        `;
+                        
+                        categoriesList.appendChild(row);
+                    });
+                    
+                    // 添加編輯分類事件
+                    document.querySelectorAll('.edit-category').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const categoryId = this.getAttribute('data-id');
+                            
+                            // 獲取分類詳情
+                            fetch(`/api/categories/${categoryId}`, {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(category => {
+                                // 填充表單
+                                document.getElementById('editCategoryId').value = category.id;
+                                document.getElementById('editCategoryName').value = category.name;
+                                document.getElementById('editCategoryDescription').value = category.description || '';
+                                
+                                // 打開模態框
+                                const modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+                                modal.show();
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('獲取分類詳情失敗：' + error.message);
+                            });
+                        });
+                    });
+                    
+                    // 添加刪除分類事件
+                    document.querySelectorAll('.delete-category').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const categoryId = this.getAttribute('data-id');
+                            
+                            if (confirm('確定要刪除此分類嗎？')) {
+                                // 發送刪除請求
+                                fetch(`/api/categories/${categoryId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`
+                                    }
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error('刪除分類失敗');
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    // 重新加載分類列表
+                                    loadCategories();
+                                    
+                                    // 顯示成功訊息
+                                    alert('分類刪除成功');
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('刪除分類失敗：' + error.message);
+                                });
+                            }
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('加載分類列表失敗：' + error.message);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

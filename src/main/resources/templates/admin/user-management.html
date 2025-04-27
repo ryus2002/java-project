@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin}">
+<head>
+    <title>用戶管理</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">用戶管理</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="fas fa-user-plus"></i> 新增用戶
+                </button>
+            </div>
+        </div>
+        
+        <!-- 搜尋 -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <form class="d-flex" th:action="@{/admin/users}" method="get">
+                    <input class="form-control me-2" type="search" placeholder="用戶名/電子郵件" name="keyword" th:value="${keyword}">
+                    <button class="btn btn-outline-primary" type="submit">搜尋</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <div class="btn-group float-end">
+                    <a href="/admin/users" class="btn btn-outline-secondary" th:classappend="${role == null ? 'active' : ''}">全部</a>
+                    <a th:each="userRole : ${T(com.example.ecommerce.model.ERole).values()}" 
+                       th:href="@{/admin/users(role=${userRole})}" 
+                       class="btn btn-outline-secondary" 
+                       th:classappend="${role != null && role.name() == userRole.name() ? 'active' : ''}"
+                       th:text="${userRole}">角色</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 用戶列表 -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>用戶名</th>
+                        <th>電子郵件</th>
+                        <th>暱稱</th>
+                        <th>角色</th>
+                        <th>註冊時間</th>
+                        <th>狀態</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(users)}">
+                        <td colspan="8" class="text-center">沒有找到用戶記錄</td>
+                    </tr>
+                    <tr th:each="user : ${users}">
+                        <td th:text="${user.id}">1</td>
+                        <td>
+                            <a th:href="@{/admin/users/{id}(id=${user.id})}" th:text="${user.username}">username</a>
+                        </td>
+                        <td th:text="${user.email}">user@example.com</td>
+                        <td th:text="${user.nickname}">暱稱</td>
+                        <td>
+                            <span th:each="role, roleStat : ${user.roles}" class="badge bg-secondary me-1" th:text="${role.name}">ROLE_USER</span>
+                        </td>
+                        <td th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm')}">2023-01-01 12:00</td>
+                        <td>
+                            <span class="badge" th:classappend="${user.enabled ? 'bg-success' : 'bg-danger'}" 
+                                  th:text="${user.enabled ? '啟用' : '停用'}">狀態</span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a th:href="@{/admin/users/{id}(id=${user.id})}" class="btn btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a th:href="@{/admin/users/{id}/edit(id=${user.id})}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger toggle-status-btn" 
+                                        th:data-user-id="${user.id}" 
+                                        th:data-enabled="${!user.enabled}">
+                                    <i class="fas" th:classappend="${user.enabled ? 'fa-ban' : 'fa-check'}"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 分頁 -->
+        <nav th:if="${totalPages > 1}">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                    <a class="page-link" th:href="@{/admin/users(page=${currentPage - 1}, role=${role}, keyword=${keyword})}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" 
+                    th:classappend="${currentPage == i ? 'active' : ''}">
+                    <a class="page-link" th:href="@{/admin/users(page=${i}, role=${role}, keyword=${keyword})}" th:text="${i + 1}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+                    <a class="page-link" th:href="@{/admin/users(page=${currentPage + 1}, role=${role}, keyword=${keyword})}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        
+        <!-- 新增用戶模態框 -->
+        <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addUserModalLabel">新增用戶</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="add-user-form">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">用戶名</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">電子郵件</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nickname" class="form-label">暱稱</label>
+                                <input type="text" class="form-control" id="nickname" name="nickname">
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">密碼</label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">角色</label>
+                                <div class="form-check" th:each="role : ${T(com.example.ecommerce.model.ERole).values()}">
+                                    <input class="form-check-input" type="checkbox" name="roles" th:value="${role}" th:id="${'role-' + role}">
+                                    <label class="form-check-label" th:for="${'role-' + role}" th:text="${role}">角色</label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="submit-add-user">儲存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript for user operations -->
+    <script th:inline="javascript" layout:fragment="script">
+        document.addEventListener('DOMContentLoaded', function() {
+            // 切換用戶狀態
+            document.querySelectorAll('.toggle-status-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const enabled = this.getAttribute('data-enabled') === 'true';
+                    const action = enabled ? '啟用' : '停用';
+                    
+                    if (confirm(`確定要${action}此用戶嗎？`)) {
+                        fetch(`/api/users/${userId}/status`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ enabled: enabled })
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                window.location.reload();
+                            } else {
+                                alert(`${action}用戶失敗`);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert(`${action}用戶時發生錯誤`);
+                        });
+                    }
+                });
+            });
+            
+            // 新增用戶
+            document.getElementById('submit-add-user').addEventListener('click', function() {
+                const form = document.getElementById('add-user-form');
+                const username = document.getElementById('username').value;
+                const email = document.getElementById('email').value;
+                const nickname = document.getElementById('nickname').value;
+                const password = document.getElementById('password').value;
+                
+                const roleCheckboxes = form.querySelectorAll('input[name="roles"]:checked');
+                const roles = Array.from(roleCheckboxes).map(checkbox => checkbox.value);
+                
+                if (roles.length === 0) {
+                    roles.push('ROLE_USER'); // 預設角色
+                }
+                
+                const userData = {
+                    username: username,
+                    email: email,
+                    nickname: nickname,
+                    password: password,
+                    roles: roles
+                };
+                
+                fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        return response.json().then(data => {
+                            throw new Error(data.message || '新增用戶失敗');
+                        });
+                    }
+                })
+                .then(data => {
+                    alert('用戶新增成功');
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
