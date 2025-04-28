@@ -6,13 +6,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 身份驗證檢查控制器
@@ -40,13 +43,18 @@ public class AuthCheckController {
             // 獲取用戶詳細信息
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             
+            // 提取角色名稱
+            List<String> roles = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+            
             // 構建響應數據
             Map<String, Object> response = new HashMap<>();
             response.put("authenticated", true);
             response.put("userId", userDetails.getId());
             response.put("username", userDetails.getUsername());
             response.put("email", userDetails.getEmail());
-            response.put("roles", userDetails.getAuthorities());
+            response.put("roles", roles);
             
             return ResponseEntity.ok(response);
         } else {
