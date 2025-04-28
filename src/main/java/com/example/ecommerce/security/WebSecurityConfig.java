@@ -133,6 +133,8 @@ public class WebSecurityConfig {
                     // 允許所有人訪問公共頁面
                     .requestMatchers("/", "/login", "/register", "/forgot-password").permitAll()
                     .requestMatchers("/products", "/products/**").permitAll()
+                    // 允許所有人訪問管理後台頁面（權限檢查將在控制器層進行）
+                    .requestMatchers("/admin", "/admin/**").permitAll()
                     // 其他所有請求需要身份驗證
                     .anyRequest().authenticated()
             );
