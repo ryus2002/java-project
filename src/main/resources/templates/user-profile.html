@@ -3,7 +3,8 @@
       th:replace="~{layout/default :: html(~{::title}, ~{::main}, ~{::link}, ~{::script})}">
 <head>
     <title>會員資料 - 電商系統</title>
-    <link rel="stylesheet" href=""> <!-- 額外的CSS -->
+    <link rel="stylesheet" href="">
+    <script th:src="@{/js/common.js}"></script>
 </head>
 <body>
     <main>
@@ -87,9 +88,8 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    // 顯示錯誤訊息
-                    document.getElementById('errorText').textContent = '獲取會員資料失敗，請稍後再試。';
-                    document.getElementById('errorMessage').classList.remove('d-none');
+                    // 使用 UIHelper 顯示錯誤訊息
+                    UIHelper.toggleErrorMessage('errorMessage', 'errorText', '獲取會員資料失敗，請稍後再試。', true);
                 });
             }
             

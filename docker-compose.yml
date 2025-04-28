@@ -11,7 +11,7 @@ services:
       MYSQL_USER: ecommerce
       MYSQL_PASSWORD: ecommerce
     ports:
-      - "3306:3306"
+      - "3307:3306"  # 修改為 3307:3306 避免與本機 MySQL 衝突
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
@@ -35,12 +35,18 @@ services:
       # 數據庫連接配置
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ecommerce?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: rootpassword
-      # JWT 配置 - 使用明文密鑰
-      # 使用 SPRING_APPLICATION_JSON 設定多個配置
-      SPRING_APPLICATION_JSON: '{"jwt":{"secret":"c2VjcmV0LWtleS1mb3ItZGV2ZWxvcG1lbnQtZW52aXJvbm1lbnQtc2hvdWxkLWJlLWNoYW5nZWQtaW4tcHJvZHVjdGlvbg==","expiration":86400000},"logging":{"level":{"org.springframework.security":"DEBUG"}}}'
+      SPRING_DATASOURCE_PASSWORD: ENC(e+cc/L5vaIsT7ONR7Z3aK3jdYEh4J53q)
+      # 使用 application.yml 配置 HikariCP，不在這裡配置
+      # JWT 配置 - 使用加密的密鑰
+      JWT_SECRET: ENC(w8irUgJb6PnhP45Vq/5Rrt7cazbE//v3+A9BWxMF4lt6+qpMQ2+rLfkH1TtXB93+qSQ3HT9eUOimxZsOFDtn2umkZO4gy6vywmKI8R+WN2+FuGPOzWF66k7whJ60gWvaxhWwzHiki8RWFH1y/x48gg==)
+      JWT_EXPIRATION: 86400000
+      # 日誌配置
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: DEBUG
+      LOGGING_LEVEL_COM_ZAXXER_HIKARI: DEBUG
       # Jasypt 加密密鑰
       JASYPT_ENCRYPTOR_PASSWORD: your_jasypt_password
+      JASYPT_ENCRYPTOR_ALGORITHM: PBEWithMD5AndDES
+      JASYPT_ENCRYPTOR_IV_GENERATOR_CLASSNAME: org.jasypt.iv.NoIvGenerator
     networks:
       - ecommerce-network
     restart: always

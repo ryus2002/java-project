@@ -3,16 +3,20 @@ package com.example.ecommerce.util;
 import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
 import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig;
 
+/**
+ * 密碼加密工具類
+ * 用於加密數據庫密碼和其他敏感信息
+ */
 public class PasswordEncryptor {
     public static void main(String[] args) {
         // 替換為您的實際資料庫密碼
-        String actualDbPassword = "123456";
+        String actualDbPassword = "rootpassword";
         
         // 替換為您的實際 JWT 密鑰
-        String actualJwtSecret = "123456";
+        String actualJwtSecret = "c2VjcmV0LWtleS1mb3ItZGV2ZWxvcG1lbnQtZW52aXJvbm1lbnQtc2hvdWxkLWJlLWNoYW5nZWQtaW4tcHJvZHVjdGlvbg==";
         
         // 替換為您的 Jasypt 主密碼
-        String jasyptPassword = "123456";
+        String jasyptPassword = "your_jasypt_password";
         
         PooledPBEStringEncryptor encryptor = new PooledPBEStringEncryptor();
         SimpleStringPBEConfig config = new SimpleStringPBEConfig();

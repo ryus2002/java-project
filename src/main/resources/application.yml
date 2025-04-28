@@ -1,0 +1,51 @@
+# 數據庫配置
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/ecommerce?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true
+    username: root
+    password: ENC(e+cc/L5vaIsT7ONR7Z3aK3jdYEh4J53q)
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      pool-name: EcommerceHikariCP
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  # JPA 配置
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+# JWT 配置
+jwt:
+  secret: ENC(w8irUgJb6PnhP45Vq/5Rrt7cazbE//v3+A9BWxMF4lt6+qpMQ2+rLfkH1TtXB93+qSQ3HT9eUOimxZsOFDtn2umkZO4gy6vywmKI8R+WN2+FuGPOzWF66k7whJ60gWvaxhWwzHiki8RWFH1y/x48gg==)
+  expiration: 86400000
+
+# 日誌配置
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.example.ecommerce.security: DEBUG
+    com.example.ecommerce.security.jwt: DEBUG
+    com.zaxxer.hikari: DEBUG
+
+# Swagger 配置
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+
+# Jasypt 加密配置
+jasypt:
+  encryptor:
+    algorithm: PBEWithMD5AndDES
+    iv-generator-classname: org.jasypt.iv.NoIvGenerator
+    password: your_jasypt_password
