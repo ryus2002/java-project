@@ -91,14 +91,4 @@ public class AdminViewController {
     public String userManagement(Model model) {
         return "admin/user-management";
     }
-    
-    /**
-     * 系統設置頁面路由
-     * @param model 模型數據
-     * @return 系統設置頁面視圖名稱
-     */
-    @GetMapping("/settings")
-    public String systemSettings(Model model) {
-        return "admin/system-settings";
-    }
 }
