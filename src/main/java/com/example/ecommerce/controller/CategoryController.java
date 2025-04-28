@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +26,9 @@ import java.util.Map;
 @RequestMapping("/api/categories")
 @Tag(name = "商品分類管理", description = "商品分類的增刪改查API")
 public class CategoryController {
+    
+    private static final Logger logger = LoggerFactory.getLogger(CategoryController.class);
+    
     @Autowired
     private CategoryRepository categoryRepository;
 
@@ -34,8 +39,15 @@ public class CategoryController {
     @GetMapping
     @Operation(summary = "獲取所有分類", description = "獲取所有商品分類的列表")
     public ResponseEntity<List<Category>> getAllCategories() {
+        try {
+            logger.info("獲取所有分類");
         List<Category> categories = categoryRepository.findAll();
+            logger.info("成功獲取 {} 個分類", categories.size());
         return ResponseEntity.ok(categories);
+        } catch (Exception e) {
+            logger.error("獲取分類列表時發生錯誤", e);
+            throw e;
+    }
     }
 
     /**
@@ -46,9 +58,15 @@ public class CategoryController {
     @GetMapping("/{id}")
     @Operation(summary = "獲取分類詳情", description = "根據ID獲取商品分類的詳細資訊")
     public ResponseEntity<?> getCategoryById(@PathVariable Long id) {
+        try {
+            logger.info("獲取分類 ID: {}", id);
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("找不到分類"));
         return ResponseEntity.ok(category);
+        } catch (Exception e) {
+            logger.error("獲取分類詳情時發生錯誤, ID: " + id, e);
+            return ResponseEntity.badRequest().body(new MessageResponse("獲取分類詳情失敗: " + e.getMessage()));
+    }
     }
 
     /**
@@ -61,6 +79,8 @@ public class CategoryController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "創建分類", description = "創建新的商品分類（需要管理員權限）")
     public ResponseEntity<?> createCategory(@Valid @RequestBody Category category) {
+        try {
+            logger.info("創建新分類: {}", category.getName());
         // 檢查分類名稱是否已存在
         if (categoryRepository.existsByName(category.getName())) {
             return ResponseEntity
@@ -71,6 +91,10 @@ public class CategoryController {
         // 創建新分類
         categoryRepository.save(category);
         return ResponseEntity.ok(new MessageResponse("分類創建成功!"));
+        } catch (Exception e) {
+            logger.error("創建分類時發生錯誤", e);
+            return ResponseEntity.badRequest().body(new MessageResponse("創建分類失敗: " + e.getMessage()));
+    }
     }
 
     /**
@@ -84,6 +108,8 @@ public class CategoryController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "更新分類", description = "更新商品分類的資訊（需要管理員權限）")
     public ResponseEntity<?> updateCategory(@PathVariable Long id, @Valid @RequestBody Map<String, String> updates) {
+        try {
+            logger.info("更新分類 ID: {}, 更新內容: {}", id, updates);
         // 查找要更新的分類
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("找不到分類"));
@@ -105,6 +131,10 @@ public class CategoryController {
         // 保存更新後的分類
         categoryRepository.save(category);
         return ResponseEntity.ok(new MessageResponse("分類更新成功!"));
+        } catch (Exception e) {
+            logger.error("更新分類時發生錯誤, ID: " + id, e);
+            return ResponseEntity.badRequest().body(new MessageResponse("更新分類失敗: " + e.getMessage()));
+    }
     }
 
     /**
@@ -117,6 +147,8 @@ public class CategoryController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "刪除分類", description = "刪除商品分類（需要管理員權限）")
     public ResponseEntity<?> deleteCategory(@PathVariable Long id) {
+        try {
+            logger.info("刪除分類 ID: {}", id);
         // 查找要刪除的分類
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("找不到分類"));
@@ -129,5 +161,9 @@ public class CategoryController {
         // 刪除分類
         categoryRepository.delete(category);
         return ResponseEntity.ok(new MessageResponse("分類刪除成功!"));
+        } catch (Exception e) {
+            logger.error("刪除分類時發生錯誤, ID: " + id, e);
+            return ResponseEntity.badRequest().body(new MessageResponse("刪除分類失敗: " + e.getMessage()));
     }
+}
 }

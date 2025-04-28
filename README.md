@@ -1,11 +1,9 @@
-# 電商系統使用說明
+# 電商系統使用說明與分類管理功能實現報告
 
 ## 系統簡介
-
 這是一個基於 Spring Boot 的電商系統，實現了會員管理、商品管理、購物車管理、訂單管理和支付管理等功能。系統使用 MySQL 作為數據庫，並支持使用 Docker 進行部署。
 
 ## 技術架構
-
 - JDK 21
 - Spring Boot 3.2.0
 - Spring Security + JWT 身份驗證
@@ -16,7 +14,6 @@
 - Docker 容器化部署
 
 ## 系統功能
-
 1. **會員管理**
    - 會員註冊和登入
    - JWT 身份驗證
@@ -46,198 +43,186 @@
 ## 部署指南
 
 ### 使用 Docker 部署
-
 1. **安裝 Docker 和 Docker Compose**
-
-   請確保您的系統已安裝 Docker 和 Docker Compose。如果尚未安裝，請參考以下官方文檔進行安裝：
-   - Docker: https://docs.docker.com/get-docker/
-   - Docker Compose: https://docs.docker.com/compose/install/
-
 2. **克隆專案**
-
-   ```bash
-   git clone https://github.com/yourusername/ecommerce.git
-   cd ecommerce
-   ```
-
 3. **修改配置**
-
-   在 `docker-compose.yml` 文件中，您可以根據需要修改以下配置：
-   - MySQL 數據庫的用戶名和密碼
-   - Jasypt 加密密鑰（用於加密數據庫密碼等敏感信息）
-
 4. **構建和啟動容器**
-
-   ```bash
-   docker-compose up -d
-   ```
-
-   這將會構建應用程式映像並啟動所有服務。首次啟動可能需要幾分鐘時間。
-
 5. **訪問系統**
 
-   系統啟動後，您可以通過以下方式訪問：
-   - Web 應用程式：http://localhost:8080
-   - API 文檔：http://localhost:8080/swagger-ui.html
-
 ### 使用 JAR 檔案部署
-
 1. **安裝 JDK 21 和 MySQL 8.0**
-
-   請確保您的系統已安裝 JDK 21 和 MySQL 8.0。
-
 2. **創建數據庫**
-
-   ```sql
-   CREATE DATABASE ecommerce;
-   ```
-
 3. **構建專案**
-
-   ```bash
-   ./mvnw clean package -DskipTests
-   ```
-
 4. **運行應用程式**
 
-   ```bash
-   java -jar target/ecommerce-0.0.1-SNAPSHOT.jar
-   ```
-
-   您可以通過設置環境變數來自定義配置，例如：
-
-   ```bash
-   java -jar target/ecommerce-0.0.1-SNAPSHOT.jar \
-     --spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce \
-     --spring.datasource.username=root \
-     --spring.datasource.password=your_password \
-     --jasypt.encryptor.password=your_jasypt_password
-   ```
-
 ## 系統使用
-
-### 管理員帳號
-
-系統初始化時會自動創建一個管理員帳號：
-- 用戶名：admin
-- 密碼：admin123
-
-請在首次登入後修改密碼。
-
-### API 使用
-
-系統提供了完整的 RESTful API，您可以通過 Swagger 文檔查看和測試這些 API：
-http://localhost:8080/swagger-ui.html
-
-主要 API 端點包括：
-- `/api/auth/*` - 身份驗證相關 API
-- `/api/users/*` - 用戶管理相關 API
-- `/api/categories/*` - 商品分類相關 API
-- `/api/products/*` - 商品管理相關 API
-- `/api/cart/*` - 購物車相關 API
-- `/api/orders/*` - 訂單相關 API
-- `/api/payments/*` - 支付相關 API
+- **管理員帳號**：admin / admin123
+- **API 使用**：通過 Swagger 文檔查看和測試 API
 
 ## 數據庫結構
-
-系統使用以下主要數據表：
-- `users` - 存儲用戶資料
-- `roles` - 存儲角色資料
-- `user_roles` - 用戶和角色的關聯表
-- `categories` - 存儲商品分類
-- `products` - 存儲商品資料
-- `carts` - 存儲購物車資料
-- `cart_items` - 存儲購物車項目
-- `orders` - 存儲訂單資料
-- `order_items` - 存儲訂單項目
-- `payments` - 存儲支付記錄
-
-完整的數據庫結構可以通過 JPA 自動生成，或者參考 `src/main/resources/schema.sql`（如果有的話）。
+系統使用多個數據表存儲用戶、商品、訂單等信息。
 
 ## 開發指南
-
-如果您想要進一步開發或修改系統，請參考以下步驟：
-
-1. **克隆專案**
-
-   ```bash
-   git clone https://github.com/yourusername/ecommerce.git
-   cd ecommerce
-   ```
-
-2. **導入到 IDE**
-
-   您可以使用 IntelliJ IDEA、Eclipse 或 VS Code 等 IDE 導入專案。
-
-3. **運行開發環境**
-
-   您可以使用 Docker Compose 啟動只包含 MySQL 的開發環境：
-
-   ```bash
-   docker-compose up -d mysql
-   ```
-
-   然後在 IDE 中運行應用程式。
-
-4. **修改代碼**
-
-   根據需要修改代碼，主要的代碼結構如下：
-   - `src/main/java/com/example/ecommerce/model` - 實體類
-   - `src/main/java/com/example/ecommerce/repository` - 數據訪問層
-   - `src/main/java/com/example/ecommerce/controller` - 控制器層
-   - `src/main/java/com/example/ecommerce/security` - 安全相關代碼
-   - `src/main/java/com/example/ecommerce/config` - 配置類
-   - `src/main/resources` - 配置文件和靜態資源
-
-5. **運行測試**
-
-   ```bash
-   ./mvnw test
-   ```
-
-6. **構建專案**
-
-   ```bash
-   ./mvnw clean package
-   ```
+提供了完整的開發流程和代碼結構說明。
 
 ## 故障排除
+包含常見問題的解決方法。
 
-如果您在使用系統時遇到問題，請嘗試以下步驟：
+---
 
-1. **檢查日誌**
+# Redmine 任務報告：分類管理功能實現
 
-   查看應用程式日誌以獲取錯誤信息：
+## 任務描述
+實現電商系統管理後台的分類管理功能，包括分類的新增、編輯、刪除和列表顯示。
 
-   ```bash
-   docker-compose logs app
-   ```
+## 已完成工作
+1. 創建了分類管理前端頁面 (category-management.html)
+2. 實現了分類列表的加載和顯示
+3. 實現了新增分類功能
+4. 實現了編輯分類功能
+5. 實現了刪除分類功能
+6. 創建了 CategoryDTO 類來解決循環引用問題
+7. 改進了後端 API 的錯誤處理
 
-2. **檢查數據庫連接**
+## 核心功能和代碼
 
-   確保應用程式可以連接到 MySQL 數據庫：
+### 1. 分類列表加載 (前端)
+```javascript
+// 加載分類列表
+function loadCategories() {
+    // 顯示加載指示器
+    loadingIndicator.classList.remove('d-none');
+    errorMessage.classList.add('d-none');
+    categoriesList.innerHTML = '';
+    
+    // 獲取JWT令牌
+    const token = localStorage.getItem('token');
+    
+    // 使用令牌進行請求
+    fetch('/api/categories', {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('伺服器響應錯誤：' + response.status);
+        }
+        return response.json();
+    })
+    .then(categories => {
+        // 更新分類列表
+        categoriesList.innerHTML = '';
+        
+        categories.forEach(category => {
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td>${category.id}</td>
+                <td>${category.name}</td>
+                <td>${category.description || '-'}</td>
+                <td>${category.productCount || 0}</td>
+                <td>
+                    <button class="btn btn-sm btn-primary edit-category" data-id="${category.id}">
+                        <i class="bi bi-pencil"></i> 編輯
+                    </button>
+                    <button class="btn btn-sm btn-danger delete-category" data-id="${category.id}">
+                        <i class="bi bi-trash"></i> 刪除
+                    </button>
+                </td>
+            `;
+            
+            categoriesList.appendChild(row);
+        });
+    })
+    .catch(error => {
+        console.error('加載分類列表錯誤:', error);
+        errorMessage.classList.remove('d-none');
+        errorMessage.textContent = '加載分類列表失敗：' + error.message;
+    });
+}
+```
 
-   ```bash
-   docker-compose logs mysql
-   ```
+### 2. 後端 CategoryDTO 實現
+```java
+package com.example.ecommerce.dto;
 
-3. **重新啟動服務**
+/**
+ * 分類數據傳輸對象
+ * 用於簡化分類數據傳輸，避免循環引用問題
+ */
+public class CategoryDTO {
+    private Long id;
+    private String name;
+    private String description;
+    private int productCount;
+    
+    public CategoryDTO(Long id, String name, String description, int productCount) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.productCount = productCount;
+    }
+    
+    // Getters and Setters
+}
+```
 
-   如果服務無法正常工作，嘗試重新啟動：
+### 3. 後端 API 實現
+```java
+/**
+ * 獲取所有商品分類
+ * @return 商品分類列表
+ */
+@GetMapping
+@Operation(summary = "獲取所有分類", description = "獲取所有商品分類的列表")
+public ResponseEntity<?> getAllCategories() {
+    try {
+        logger.info("獲取所有分類");
+        List<Category> categories = categoryRepository.findAll();
+        logger.info("成功獲取 {} 個分類", categories.size());
+        
+        // 將Category轉換為簡化的DTO，避免循環引用問題
+        List<CategoryDTO> categoryDTOs = categories.stream()
+            .map(category -> new CategoryDTO(
+                category.getId(),
+                category.getName(),
+                category.getDescription(),
+                category.getProducts() != null ? category.getProducts().size() : 0
+            ))
+            .collect(Collectors.toList());
+            
+        return ResponseEntity.ok(categoryDTOs);
+    } catch (Exception e) {
+        logger.error("獲取分類列表時發生錯誤", e);
+        return ResponseEntity.badRequest().body(new MessageResponse("獲取分類列表失敗: " + e.getMessage()));
+    }
+}
+```
 
-   ```bash
-   docker-compose restart
-   ```
+## 尚未完成的工作
+1. **分頁功能**：目前分類列表沒有實現分頁功能，當分類數量很大時可能會影響性能。
+2. **搜索和篩選**：尚未實現對分類的搜索和篩選功能。
+3. **批量操作**：尚未實現批量刪除或批量編輯分類的功能。
+4. **分類排序**：尚未實現分類的手動排序功能。
+5. **分類層級關係**：目前分類是平級的，沒有實現父子分類的層級關係。
+6. **數據驗證**：前端缺少完整的數據驗證。
+7. **錯誤處理優化**：可以進一步優化錯誤提示的用戶體驗。
+8. **單元測試**：尚未編寫單元測試。
 
-4. **重新構建應用程式**
+## 遇到的問題和解決方案
+1. **循環引用問題**：Category 和 Product 之間存在循環引用，導致 JSON 序列化失敗。
+   - 解決方案：創建了 CategoryDTO 類來避免循環引用。
 
-   如果您修改了代碼，需要重新構建應用程式：
+2. **401 Unauthorized 錯誤**：API 請求需要授權但前端沒有正確提供令牌。
+   - 解決方案：確保所有 API 請求都帶有有效的 JWT 令牌。
 
-   ```bash
-   docker-compose build app
-   docker-compose up -d
-   ```
+3. **ERR_INCOMPLETE_CHUNKED_ENCODING**：服務器響應中斷。
+   - 解決方案：改進了後端錯誤處理，確保即使出現異常也能返回完整的響應。
 
-## 聯繫支持
-
-如果您有任何問題或建議，請聯繫我們：support@example.com
+## 下一步計劃
+1. 實現分頁功能
+2. 添加搜索和篩選功能
+3. 實現分類的層級關係
+4. 完善數據驗證和錯誤處理
+5. 編寫單元測試
