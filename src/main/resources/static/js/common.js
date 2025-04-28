@@ -32,6 +32,36 @@ const AuthService = {
     },
     
     /**
+     * 檢查用戶是否具有管理員權限
+     * 如果用戶未登入或不是管理員，則重定向到適當的頁面
+     * @returns {Promise} 用戶資料的 Promise 對象
+     */
+    checkAdminAuth: function() {
+        return this.checkAuth()
+            .then(userData => {
+                // 檢查用戶是否具有管理員角色
+                const roles = userData.roles || [];
+                const isAdmin = roles.includes('ROLE_ADMIN');
+                
+                if (!isAdmin) {
+                    // 如果不是管理員，顯示錯誤訊息並重定向到首頁
+                    alert('您沒有管理員權限，無法訪問管理後台');
+                    window.location.href = '/';
+                    throw new Error('用戶不是管理員');
+                }
+                
+                return userData;
+            })
+            .catch(error => {
+                if (error.message === '用戶未登入') {
+                    // 如果用戶未登入，重定向到登入頁面
+                    this.redirectToLogin();
+                }
+                throw error;
+            });
+    },
+    
+    /**
      * 重定向到登入頁面
      * @param {string} currentPath - 當前頁面路徑，登入後將重定向回此頁面
      */
@@ -86,10 +116,16 @@ const AuthService = {
                 usernameElements.forEach(el => el.textContent = userData.username || '用戶');
                 
                 // 檢查用戶是否為管理員
-                const isAdmin = userData.roles && userData.roles.includes('ROLE_ADMIN');
+                const roles = userData.roles || [];
+                console.log('User roles:', roles); // 調試用
+                const isAdmin = roles.includes('ROLE_ADMIN');
+                console.log('Is admin:', isAdmin); // 調試用
                 
                 // 顯示或隱藏管理員特有的元素
-                adminElements.forEach(el => el.style.display = isAdmin ? '' : 'none');
+                adminElements.forEach(el => {
+                    el.style.display = isAdmin ? '' : 'none';
+                    console.log('Admin element display:', el.style.display); // 調試用
+                });
                 
                 // 更新購物車數量
                 CartService.updateCartItemCount();
@@ -97,6 +133,7 @@ const AuthService = {
                 return userData;
             })
             .catch(error => {
+                console.error('Auth check error:', error); // 調試用
                 // 用戶未登入
                 // 顯示未登入用戶的元素
                 guestElements.forEach(el => el.style.display = '');
@@ -337,6 +374,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 更新導航欄顯示
     AuthService.updateNavigation();
+    
+    // 檢查是否在管理後台頁面
+    if (window.location.pathname.startsWith('/admin')) {
+        // 檢查管理員權限
+        AuthService.checkAdminAuth().catch(error => {
+            console.error('Admin auth check error:', error);
+            // 錯誤處理已在 checkAdminAuth 中完成
+        });
+    }
     
     // 為所有加入購物車按鈕添加事件
     document.querySelectorAll('.add-to-cart').forEach(button => {
